@@ -1,0 +1,9 @@
+# To enforce uniform labels in your metrics, we need to limit what providers and blockchains users can specify in their exporter configuration.
+allowed_providers: # When adding endpoints, these are the only values you will be able to add as providers. Otherwise program will exit with error.
+  - Provider1
+  - Provider2
+  - Provider3
+allowed_blockchains: # When setting Blockchain key in your config file, it will be validate against this list.`
+  - Example Chain
+  - Example Chain2
+  - Example Chain3
