@@ -6,13 +6,6 @@ connection_timeout_seconds : 5          # Amount in seconds before websocket cli
 slo:                                    # Metrics below 'slo' will only affect `ws_rpc_sla_compliant` metric. In case any of the threshold are breached, this metric will be set to 0 for that perticular RPC endpoint.
   max_pool_deviation_block_count: 10    # Threshold for max allowed deviation in block height, compared to the node with the highest block count in the pool.
   max_response_latency_miliseconds: 500 # Threshold for max allowed latency.
-validation:                             # Validation section makes sure that "endpoints" can only be added with specific providers / chain. This is done to make sure labels in metrics are consistent.
-  providers:
-    - Provider1
-    - Provider2
-    - Provider3
-  blockchains:
-    - "Example Chain"
 endpoints:                              # List of endpoints with their metadata.
   - url: wss://example-rpc-1.com/ws     # RPC Endpoint (Must start with wss://)
     provider: Provider1                 # Provider (Must be present in allowed providers list. Please check src/settings.py line 24) The purpose is to make sure we do not have same providers spelled differently
