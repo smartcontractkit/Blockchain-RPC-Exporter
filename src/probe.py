@@ -48,7 +48,7 @@ class rpc_probe(threading.Thread):
                 await websocket.send(
                     json.dumps({
                         "method": "eth_subscribe",
-                        "jsonrpc":"2.0",
+                        "jsonrpc": "2.0",
                         "id": chain_id,
                         "params": ["newHeads"]
                     }))
@@ -96,20 +96,29 @@ class rpc_probe(threading.Thread):
         await asyncio.wait_for(ws.send(
             json.dumps({
                 "method": "eth_getBlockByNumber",
-                "jsonrpc":"2.0",
+                "jsonrpc": "2.0",
                 "id": self.chain_id,
                 "params": [hex_block_number, False]
             })),
                                timeout=self.timeout)
         response = await asyncio.wait_for(ws.recv(), timeout=self.timeout)
         response_json = json.loads(response)
-        if "error" in response_json:
+
+        try:
+            result = response_json['result']
+        except KeyError:
+            logging.debug(response_json)
+            error = "Key `result` was not found in response while requesting eth_getBlockByNumber"
+
+        if "totalDifficulty" in response_json['result']:
+            total_difficulty = int(result['totalDifficulty'], 16)
+
+        elif "error" in response_json:
             error = response_json['error']['message']
-        elif response_json['result'] == None:
-            error = "Received response of type `None` for block totalDifficulty."
         else:
-            total_difficulty = int(
-                json.loads(response)['result']['totalDifficulty'], 16)
+            # Set totalDifficulty to 0 if blockchain does not use it.
+            total_difficulty = 0
+
         return total_difficulty, error
 
     async def _fetch_block_height(self, ws):
@@ -119,7 +128,7 @@ class rpc_probe(threading.Thread):
         await asyncio.wait_for(ws.send(
             json.dumps({
                 "method": "eth_blockNumber",
-                "jsonrpc":"2.0",
+                "jsonrpc": "2.0",
                 "id": self.chain_id
             })),
                                timeout=self.timeout)
@@ -130,8 +139,11 @@ class rpc_probe(threading.Thread):
         if "error" in result:
             error = result['error']['message']
         else:
-            block_height = int(json.loads(response)['result'], 16)
-
+            try:
+                block_height = int(result['result'], 16)
+            except KeyError:
+                logging.debug(response)
+                error = "Key `result` was not found in response while requesting eth_blockNumber"
         return block_height, error
 
     async def _collect(self, uri, provider):
