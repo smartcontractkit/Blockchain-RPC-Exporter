@@ -104,21 +104,23 @@ class rpc_probe(threading.Thread):
         response = await asyncio.wait_for(ws.recv(), timeout=self.timeout)
         response_json = json.loads(response)
 
-        try:
-            result = response_json['result']
-        except KeyError:
-            logging.debug(response_json)
-            error = "Key `result` was not found in response while requesting eth_getBlockByNumber"
-
-        if "totalDifficulty" in response_json['result']:
-            total_difficulty = int(result['totalDifficulty'], 16)
-
-        elif "error" in response_json:
-            error = response_json['error']['message']
+        if response_json['result'] == None:
+            error = "RPC returned response of type `None`"
         else:
-            # Set totalDifficulty to 0 if blockchain does not use it.
-            total_difficulty = 0
+            try:
+                result = response_json['result']
+            except KeyError:
+                logging.debug(response_json)
+                error = "Key `result` was not found in response while requesting eth_getBlockByNumber"
 
+            if "totalDifficulty" in response_json['result']:
+                total_difficulty = int(result['totalDifficulty'], 16)
+
+            elif "error" in response_json:
+                error = response_json['error']['message']
+            else:
+                # Set totalDifficulty to 0 if blockchain does not use it.
+                total_difficulty = 0
         return total_difficulty, error
 
     async def _fetch_block_height(self, ws):
@@ -136,14 +138,17 @@ class rpc_probe(threading.Thread):
         response = await asyncio.wait_for(ws.recv(), timeout=self.timeout)
 
         result = json.loads(response)
-        if "error" in result:
-            error = result['error']['message']
+        if result['result'] == None:
+            error = "RPC returned response of type `None`"
         else:
-            try:
-                block_height = int(result['result'], 16)
-            except KeyError:
-                logging.debug(response)
-                error = "Key `result` was not found in response while requesting eth_blockNumber"
+            if "error" in result:
+                error = result['error']['message']
+            else:
+                try:
+                    block_height = int(result['result'], 16)
+                except KeyError:
+                    logging.debug(response)
+                    error = "Key `result` was not found in response while requesting eth_blockNumber"
         return block_height, error
 
     async def _collect(self, uri, provider):
