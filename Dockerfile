@@ -1,4 +1,4 @@
-FROM python:3.9.10 AS build
+FROM python:3.10.5 AS build
 COPY requirements.txt .
 RUN pip install -r ./requirements.txt
 
