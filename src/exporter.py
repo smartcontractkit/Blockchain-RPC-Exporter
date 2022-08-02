@@ -36,8 +36,8 @@ class metrics_registry(object):
 
     def collect(self):
         metric_labels = [
-            'url', 'blockchain', 'network_name', 'network_type', 'url',
-            'provider'
+            'url', 'blockchain', 'network_name', 'network_type',
+            'provider', 'evmChainID'
         ]
 
         up_metric = GaugeMetricFamily('ws_rpc_health',
@@ -97,7 +97,7 @@ class metrics_registry(object):
 
             labels = [
                 obs_url, settings.BLOCKCHAIN, settings.NETWORK_NAME,
-                settings.NETWORK_TYPE, obs_url, obs_provider
+                settings.NETWORK_TYPE, obs_provider, str(settings.CHAIN_ID)
             ]
 
             if obs_up:
