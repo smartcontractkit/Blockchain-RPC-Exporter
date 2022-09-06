@@ -1,24 +1,27 @@
 # EVM RPC Websocket Exporter
-Simple exporter used to scrape different metrics from EVM compatible websocket RPCs.
-
+The exporter is used to scrape metrics from blockchain RPC endpoints. The purpose of this exporter is to perform black-box testing on RPC endpoints.
+c
 ## Metrics
-For list of metrics and explanations please check [collect method](src/exporter.py#L42-L79) in exporter source-code.
-For available labels please see [metric_labels](src/exporter.py#L37-L40) list in exporter source-code.
+Exporter currently supports all EVM-compatible chains. In addition, there is limited support for the following chains:
+- Cardano
+- Conflux
+- Solana
 
 # Disclaimer
-Please note that this tool is in early development stage, and as such should not be used to influence business crictical decisions.
-The project in it's current form suits our short-term needs and will receive limited support. We encourage you to fork the project, and extend it with additional functionality you might need.
-This project was inspired by [blackbox-websocket-exporter](https://github.com/smohsensh/blackbox-websocket-exporter)
+Please note that this tool is in the early development stage and should not be used to influence critical business decisions.
+The project in its current form suits our short-term needs and will receive limited support. We encourage you to fork the project and extend it with additional functionality you might need.
 
 ## Development
-It is recommended that you install [pre-commit](https://pre-commit.com/) so that automated linting and formatting checks are performed before each commit. Run:
+You should install [pre-commit](https://pre-commit.com/) so that automated linting and formatting checks are performed before each commit. 
+
+Run:
 ```bash
 pip install pre-commit
 pre-commit install
 ```
 ### Running locally
 1. Make sure you have python3 installed (>3.9.10)
-2. Set-up your python environment
+2. Set up your python environment
 ```bash
 pip3 install virtualenv
 virtualenv venv

@@ -3,7 +3,3 @@ allowed_providers: # When adding endpoints, these are the only values you will b
   - Provider1
   - Provider2
   - Provider3
-allowed_blockchains: # When setting Blockchain key in your config file, it will be validate against this list.`
-  - Example Chain
-  - Example Chain2
-  - Example Chain3
