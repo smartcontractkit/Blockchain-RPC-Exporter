@@ -1,15 +1,24 @@
-blockchain: "Example Chain"             # Name of blockchain i.e "Ethereum"
-chain_id: 1                             # Chain ID, can be found at https://chainlist.org/
-network_name: "Example"                 # Name of the blokckchain network i.e Rinkeby
-network_type: "Example"                 # Type of the blockchain network, only two values allowed (Mainnet|Testnet)
-connection_timeout_seconds : 5          # Amount in seconds before websocket client drops a connection that has not finished connection handshake and labels the RPC node as unhealhty.
-slo:                                    # Metrics below 'slo' will only affect `ws_rpc_sla_compliant` metric. In case any of the threshold are breached, this metric will be set to 0 for that perticular RPC endpoint.
-  max_pool_deviation_block_count: 10    # Threshold for max allowed deviation in block height, compared to the node with the highest block count in the pool.
-  max_response_latency_miliseconds: 500 # Threshold for max allowed latency.
-endpoints:                              # List of endpoints with their metadata.
-  - url: wss://example-rpc-1.com/ws     # RPC Endpoint (Must start with wss://)
-    provider: Provider1                 # Provider (Must be present in allowed providers list. Please check src/settings.py line 24) The purpose is to make sure we do not have same providers spelled differently
-  - url: wss://example-rpc-2.com/ws
+blockchain: "Example Chain" # Name of blockchain i.e "Ethereum"
+chain_id: 1              # Chain ID, can be found at https://chainlist.org/
+network_name: "Example"  # Name of the blokckchain network i.e Rinkeby
+network_type: "Example"  # Type of the blockchain network, only two values allowed (Mainnet|Testnet)
+connection_parameters:
+  open_timeout: 6 # Timeout when opening websocket connection
+  close_timeout: 1 # Timeout when closing websocket connection
+  response_timeout: 5 # Timeout when waiting for a websocket message response
+  ping_interval: 6 # Liveness ping intervals
+  ping_timeout: 3 # Liveness ping timeout
+collector: "evm" # This will load different collectors based on what mode exporter will run with Supported modes are: "evm", "solana", "conflux", "cardano"
+endpoints: # List of endpoints with their metadata.
+  - ws_url: wss://example-rpc-1.com/ws # RPC Endpoint websocket endpoint (Must start with wss://)
+    https_url: https://example-rpc-1.com/rpc    # RPC Endpoint https endpoint (Must be valid https:// domain)
+    provider: Provider1 # Provider (Must be present in allowed providers list. Please check src/settings.py line 24) The purpose is to make sure we do not have same providers spelled differently                       
+  - ws_url: wss://example-rpc-2.com/ws
+    https_url: https://example-rpc-2.com/rpc
     provider: Provider2
-  - url: wss://example-rpc-3.com/ws
+  - ws_url: wss://example-rpc-3.com/ws
+    https_url: https://example-rpc-3.com/rpc
     provider: Provider3
+
+
+
