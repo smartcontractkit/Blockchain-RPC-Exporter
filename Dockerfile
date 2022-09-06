@@ -10,7 +10,7 @@ COPY --from=build /usr/local/lib/python3.9/site-packages/ \
 ENV LC_ALL C.UTF-8
 WORKDIR /usr/src/app
 COPY src/*.py .
-
+COPY src/collectors/* collectors/
 # https://github.com/GoogleContainerTools/distroless/blob/main/experimental/python3/BUILD#L77
 USER nonroot
 CMD ["exporter.py"]
