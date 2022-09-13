@@ -41,5 +41,5 @@ class solana_collector():
                 metrics['ws_rpc_block_height'].add_metric(self.labels_values, self.client.get_block_height()['result'])
             else:
                 metrics['ws_rpc_health'].add_metric(self.labels_values, False)
-        except Exception as e:
-            logger.error(e)
+        except Exception as exc:
+            logger.error("Failed probing {} with error: {}".format(strip_url(self.url), exc))

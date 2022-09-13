@@ -49,4 +49,4 @@ class evm_collector():
             logger.info("Client timed out for {}".format(strip_url(self.websocket_url)))
             metrics['ws_rpc_health'].add_metric(self.labels_values, False)
         except Exception as exc:
-            logger.error("Failed probing {} with error: {}".format(strip_url(self.websocket_url), exc))
+            logger.error("Failed probing {} with error: {}".format(strip_url(self.url), exc))
