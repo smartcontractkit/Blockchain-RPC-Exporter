@@ -17,7 +17,12 @@ class configuration():
         self.allowed_providers = self._load_validation_file(validation_file_path)
         self.configuration = self._load_configuration_file(config_file_path)
         self.blockchain = self.configuration['blockchain']
-        self.chain_id = self.configuration['chain_id']
+        # Load chain_id only if evm compatible collector
+        if self.configuration['collector'] not in ['cardano', 'solana']:
+            try:
+                self.chain_id = self.configuration['chain_id']
+            except KeyError:
+                logger.error("This chain requires chain_id configuration, but it is not provided.")
         self.network_type = self.configuration['network_type']
         self.network_name = self.configuration['network_name']
         self.endpoints = self.configuration['endpoints']
