@@ -7,7 +7,7 @@ from helpers import strip_url
 class cardano_collector():
 
     def __init__(self, url, provider):
-        self.labels = ['url', 'provider', 'blockchain', 'network_name', 'network_type', 'evmChainID']
+        self.labels = ['url', 'provider', 'blockchain', 'network_name', 'network_type']
         self.labels_values = [url, provider, cfg.blockchain, cfg.network_name, cfg.network_type]
         self.url = url
         self.ws_collector = websocket_collector(url, provider)
