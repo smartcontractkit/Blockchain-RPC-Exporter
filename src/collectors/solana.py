@@ -28,7 +28,7 @@ class solana_collector():
             response = requests.get(self.health_uri, timeout=cfg.response_timeout)
             response.raise_for_status()
         except (IOError, requests.HTTPError) as err:
-            logger.error("Health check failed for {}.".format(strip_url(self.health_uri)))
+            logger.error("Health check failed for {}: {}".format(strip_url(self.health_uri), err))
             return False
         return response.ok
 
