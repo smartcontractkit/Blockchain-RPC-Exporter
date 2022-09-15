@@ -39,7 +39,7 @@ class prom_registry(object):
 
     def _instantiate_solana(self):
         for item in cfg.endpoints:
-            logger.info("Initializing solana node {}".format(strip_url(item['ws_url'])))
+            logger.info("Initializing solana node {}".format(strip_url(item['https_url'])))
             self.collectors.append(solana_collector(item['ws_url'], item['https_url'], item['provider']))
         self.labels = self.collectors[0].labels
 
