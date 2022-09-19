@@ -7,6 +7,7 @@ from collectors.evm import evm_collector
 from collectors.solana import solana_collector
 from collectors.cardano import cardano_collector
 from collectors.conflux import conflux_collector
+from collectors.bitcoin import bitcoin_collector
 from settings import logger, cfg
 
 
@@ -24,6 +25,8 @@ class prom_registry(object):
             self._instantiate_cardano()
         if cfg.isConflux():
             self._instantiate_conflux()
+        if cfg.isBitcoin():
+            self._instantiate_bitcoin()
 
     def _instantiate_evm(self):
         for item in cfg.endpoints:
@@ -47,6 +50,12 @@ class prom_registry(object):
         for item in cfg.endpoints:
             logger.info("Initializing cardano node {}".format(strip_url(item['ws_url'])))
             self.collectors.append(cardano_collector(item['ws_url'], item['provider']))
+            self.labels = self.collectors[0].labels
+
+    def _instantiate_bitcoin(self):
+        for item in cfg.endpoints:
+            logger.info("Initializing bitcoin node {}".format(strip_url(item['https_url'])))
+            self.collectors.append(bitcoin_collector(item['https_url'], item['provider']))
             self.labels = self.collectors[0].labels
 
     def collect(self):

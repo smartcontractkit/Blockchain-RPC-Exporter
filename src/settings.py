@@ -18,7 +18,7 @@ class configuration():
         self.configuration = self._load_configuration_file(config_file_path)
         self.blockchain = self.configuration['blockchain']
         # Load chain_id only if evm compatible collector
-        if self.configuration['collector'] not in ['cardano', 'solana']:
+        if self.configuration['collector'] not in ['cardano', 'solana', 'bitcoin']:
             try:
                 self.chain_id = self.configuration['chain_id']
             except KeyError:
@@ -76,6 +76,9 @@ class configuration():
     def isConflux(self) -> bool:
         return self.configuration['collector'] == "conflux"
 
+    def isBitcoin(self) -> bool:
+        return self.configuration['collector'] == "bitcoin"
+
     def _load_configuration_file(self, path):
         logger.info('Loading {}'.format(path))
         configuration_file_schema = Schema({
@@ -88,7 +91,7 @@ class configuration():
             'network_type':
             And(str, lambda s: s in ('Testnet', 'Mainnet')),
             'collector':
-            And(str, lambda s: s in ('evm', 'cardano', 'conflux', 'solana')),
+            And(str, lambda s: s in ('evm', 'cardano', 'conflux', 'solana', 'bitcoin')),
             Optional('connection_parameters'): {
                 Optional('open_timeout'): And(int),
                 Optional('close_timeout'): And(int),
@@ -97,7 +100,7 @@ class configuration():
                 Optional('ping_timeout'): And(int),
             },
             'endpoints': [{
-                'ws_url': And(str),
+                Optional('ws_url'): And(str),
                 Optional('https_url'): And(str),
                 'provider': And(str, lambda s: s in self.allowed_providers)
             }]
