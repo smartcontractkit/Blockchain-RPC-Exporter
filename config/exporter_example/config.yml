@@ -8,7 +8,7 @@ connection_parameters:
   response_timeout: 5 # Timeout when waiting for a websocket message response
   ping_interval: 6 # Liveness ping intervals
   ping_timeout: 3 # Liveness ping timeout
-collector: "evm" # This will load different collectors based on what mode exporter will run with Supported modes are: "evm", "solana", "conflux", "cardano"
+collector: "evm" # This will load different collectors based on what mode exporter will run with Supported modes are: "evm", "solana", "conflux", "cardano", "bitcoin"
 endpoints: # List of endpoints with their metadata.
   - ws_url: wss://example-rpc-1.com/ws # RPC Endpoint websocket endpoint (Must start with wss://)
     https_url: https://example-rpc-1.com/rpc    # RPC Endpoint https endpoint (Must be valid https:// domain)
