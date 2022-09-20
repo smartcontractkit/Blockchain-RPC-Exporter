@@ -9,6 +9,7 @@ from collectors.cardano import cardano_collector
 from collectors.conflux import conflux_collector
 from collectors.bitcoin import bitcoin_collector
 from collectors.dogecoin import doge_collector
+from collectors.filecoin import filecoin_collector
 from settings import logger, cfg
 
 
@@ -30,6 +31,8 @@ class prom_registry(object):
             self._instantiate_bitcoin()
         if cfg.isDoge():
             self._instantiate_doge()
+        if cfg.isFilecoin():
+            self._instantiate_filecoin()
 
     def _instantiate_evm(self):
         for item in cfg.endpoints:
@@ -80,6 +83,14 @@ class prom_registry(object):
                 strip_url(item['https_url'])))
             self.collectors.append(
                 doge_collector(item['https_url'], item['provider']))
+            self.labels = self.collectors[0].labels
+
+    def _instantiate_filecoin(self):
+        for item in cfg.endpoints:
+            logger.info("Initializing filecoin node {}".format(
+                strip_url(item['https_url'])))
+            self.collectors.append(
+                filecoin_collector(item['https_url'], item['provider']))
             self.labels = self.collectors[0].labels
 
     def collect(self):
