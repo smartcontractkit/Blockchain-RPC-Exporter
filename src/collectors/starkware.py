@@ -8,7 +8,7 @@ class starkware_collector():
 
     def __init__(self, https_url, provider):
         self.labels = [
-            'websocket_url', 'https_url', 'provider', 'blockchain',
+            'https_url', 'provider', 'blockchain',
             'network_name', 'network_type'
         ]
         self.labels_values = [
