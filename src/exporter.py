@@ -10,6 +10,7 @@ from collectors.conflux import conflux_collector
 from collectors.bitcoin import bitcoin_collector
 from collectors.dogecoin import doge_collector
 from collectors.filecoin import filecoin_collector
+from collectors.starkware import starkware_collector
 from settings import logger, cfg
 
 
@@ -33,6 +34,8 @@ class prom_registry(object):
             self._instantiate_doge()
         if cfg.isFilecoin():
             self._instantiate_filecoin()
+        if cfg.isStarkware():
+            self._instantiate_starkware()
 
     def _instantiate_evm(self):
         for item in cfg.endpoints:
@@ -91,6 +94,14 @@ class prom_registry(object):
                 strip_url(item['https_url'])))
             self.collectors.append(
                 filecoin_collector(item['https_url'], item['provider']))
+            self.labels = self.collectors[0].labels
+
+    def _instantiate_starkware(self):
+        for item in cfg.endpoints:
+            logger.info("Initializing starkware node {}".format(
+                strip_url(item['https_url'])))
+            self.collectors.append(
+                starkware_collector(item['https_url'], item['provider']))
             self.labels = self.collectors[0].labels
 
     def collect(self):
