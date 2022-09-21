@@ -7,6 +7,8 @@ Exporter currently supports all EVM-compatible chains. In addition, there is lim
 - Solana
 - Bitcoin
 - Dogecoin
+- Filecoin
+- Starkware
 
 # Disclaimer
 Please note that this tool is in the early development stage and should not be used to influence critical business decisions.
