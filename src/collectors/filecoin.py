@@ -20,16 +20,16 @@ class filecoin_collector():
             latency = (perf_counter() - start) * 1000
 
             if response.ok:
-                metrics['ws_rpc_health'].add_metric(self.labels_values, True)
-                metrics['ws_rpc_latency'].add_metric(self.labels_values, latency)
-                metrics['ws_rpc_block_height'].add_metric(self.labels_values, response.json()['result']['Height'])
+                metrics['brpc_health'].add_metric(self.labels_values, True)
+                metrics['brpc_latency'].add_metric(self.labels_values, latency)
+                metrics['brpc_block_height'].add_metric(self.labels_values, response.json()['result']['Height'])
             else:
                 logger.error("Bad response from client while fetching Filecoin.ChainHead method for {}: {}".format(
                     strip_url(self.url), response))
-                metrics['ws_rpc_health'].add_metric(self.labels_values, False)
+                metrics['brpc_health'].add_metric(self.labels_values, False)
         except requests.RequestException as exc:
             logger.error("Health check failed for {}: {}".format(strip_url(self.url), exc))
-            metrics['ws_rpc_health'].add_metric(self.labels_values, False)
+            metrics['brpc_health'].add_metric(self.labels_values, False)
         except Exception as e:
             logger.error("Health check failed for {}: {}".format(strip_url(self.url), e))
-            metrics['ws_rpc_health'].add_metric(self.labels_values, False)
+            metrics['brpc_health'].add_metric(self.labels_values, False)

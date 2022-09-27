@@ -19,16 +19,16 @@ class doge_collector():
             latency = (perf_counter() - start) * 1000
 
             if response:
-                metrics['ws_rpc_health'].add_metric(self.labels_values, True)
-                metrics['ws_rpc_latency'].add_metric(self.labels_values, latency)
-                metrics['ws_rpc_block_height'].add_metric(self.labels_values, response['result']['blocks'])
-                metrics['ws_rpc_total_difficulty'].add_metric(self.labels_values, response['result']['difficulty'])
+                metrics['brpc_health'].add_metric(self.labels_values, True)
+                metrics['brpc_latency'].add_metric(self.labels_values, latency)
+                metrics['brpc_block_height'].add_metric(self.labels_values, response['result']['blocks'])
+                metrics['brpc_total_difficulty'].add_metric(self.labels_values, response['result']['difficulty'])
             else:
                 logger.error("Bad response from client {}: {}".format(strip_url(self.url), exc))
-                metrics['ws_rpc_health'].add_metric(self.labels_values, False)
+                metrics['brpc_health'].add_metric(self.labels_values, False)
         except requests.RequestException as exc:
             logger.error("Health check failed for {}: {}".format(strip_url(self.url), exc))
-            metrics['ws_rpc_health'].add_metric(self.labels_values, False)
+            metrics['brpc_health'].add_metric(self.labels_values, False)
         except Exception as exc:
             logger.error("Health check failed for {}: {}".format(strip_url(self.url), exc))
-            metrics['ws_rpc_health'].add_metric(self.labels_values, False)
+            metrics['brpc_health'].add_metric(self.labels_values, False)

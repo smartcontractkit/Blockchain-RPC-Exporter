@@ -32,10 +32,10 @@ class cardano_collector():
         try:
             alive = self.ws_collector.get_liveliness()
             if alive:
-                metrics['ws_rpc_health'].add_metric(self.labels_values, True)
-                metrics['ws_rpc_latency'].add_metric(self.labels_values, self.ws_collector.get_latency())
-                metrics['ws_rpc_block_height'].add_metric(self.labels_values, self._get_block_height())
+                metrics['brpc_health'].add_metric(self.labels_values, True)
+                metrics['brpc_latency'].add_metric(self.labels_values, self.ws_collector.get_latency())
+                metrics['brpc_block_height'].add_metric(self.labels_values, self._get_block_height())
             else:
-                metrics['ws_rpc_health'].add_metric(self.labels_values, False)
+                metrics['brpc_health'].add_metric(self.labels_values, False)
         except Exception as exc:
             logger.error("Failed probing {} with error: {}".format(strip_url(self.url), exc))

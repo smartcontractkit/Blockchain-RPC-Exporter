@@ -88,34 +88,34 @@ class prom_registry(object):
 
     def collect(self):
         metrics = {
-            "ws_rpc_health":
-            GaugeMetricFamily('ws_rpc_health',
+            "brpc_health":
+            GaugeMetricFamily('brpc_health',
                               'Returns 1 if rpc websocket server established a connection with the probe client.',
                               labels=self.labels),
-            "ws_rpc_latency":
-            GaugeMetricFamily('ws_rpc_latency',
+            "brpc_latency":
+            GaugeMetricFamily('brpc_latency',
                               'Latency in milliseconds of the websocket keepalive ping.',
                               labels=self.labels),
-            "ws_rpc_disconnects":
-            GaugeMetricFamily('ws_rpc_disconnects', 'How many times rpc has disconnected.', labels=self.labels),
-            "ws_rpc_block_height":
-            GaugeMetricFamily('ws_rpc_block_height', 'Latest observed block_height.', labels=self.labels),
-            "ws_rpc_head_count":
-            CounterMetricFamily('ws_rpc_head_count', 'Heads received total.', labels=self.labels),
-            "ws_rpc_difficulty":
-            GaugeMetricFamily('ws_rpc_difficulty', 'Difficulty of the latest observed block.', labels=self.labels),
-            "ws_rpc_total_difficulty":
-            GaugeMetricFamily('ws_rpc_total_difficulty',
+            "brpc_disconnects":
+            GaugeMetricFamily('brpc_disconnects', 'How many times rpc has disconnected.', labels=self.labels),
+            "brpc_block_height":
+            GaugeMetricFamily('brpc_block_height', 'Latest observed block_height.', labels=self.labels),
+            "brpc_head_count":
+            CounterMetricFamily('brpc_head_count', 'Heads received total.', labels=self.labels),
+            "brpc_difficulty":
+            GaugeMetricFamily('brpc_difficulty', 'Difficulty of the latest observed block.', labels=self.labels),
+            "brpc_total_difficulty":
+            GaugeMetricFamily('brpc_total_difficulty',
                               'Total canonical chain difficulty observed from the first to the latest block.',
                               labels=self.labels),
-            "ws_rpc_gas_price":
-            GaugeMetricFamily('ws_rpc_gas_price', 'The current gas price in Wei.', labels=self.labels),
-            "ws_rpc_max_priority_fee":
-            GaugeMetricFamily('ws_rpc_max_priority_fee',
+            "brpc_gas_price":
+            GaugeMetricFamily('brpc_gas_price', 'The current gas price in Wei.', labels=self.labels),
+            "brpc_max_priority_fee":
+            GaugeMetricFamily('brpc_max_priority_fee',
                               'Suggested max priority fee for dynamic fee transactions in Wei.',
                               labels=self.labels),
-            "ws_rpc_net_peer_count":
-            GaugeMetricFamily('ws_rpc_net_peer_count',
+            "brpc_net_peer_count":
+            GaugeMetricFamily('brpc_net_peer_count',
                               'Number of peers currently connected to the client.',
                               labels=self.labels)
         }
