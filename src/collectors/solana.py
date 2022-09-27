@@ -1,17 +1,29 @@
 from settings import cfg, logger
 from solana.rpc.api import Client
-from helpers import strip_url, url_join
+from helpers import strip_url, url_join, validate_protocol, generate_labels_from_metadata
 from collectors.ws import websocket_collector
 import requests
 
 
 class solana_collector():
 
-    def __init__(self, ws_url, https_url, provider):
-        self.labels = ['ws_url'
-                       'https_url', 'provider', 'blockchain', 'network_name', 'network_type']
-        self.labels_values = [ws_url, https_url, provider, cfg.blockchain, cfg.network_name, cfg.network_type]
-        self.ws_collector = websocket_collector(ws_url,
+    def __init__(self, rpc_metadata):
+
+        try:
+            self.subscribe_url = rpc_metadata['subscribe_url']
+        except KeyError:
+            logger.error(
+                "Please note that solana collector requires subscribe_url websocket endpoint on top of regular url. Please refer to example configuration for example"
+            )
+
+        validate_protocol(rpc_metadata['subscribe_url'], 'wss')
+        validate_protocol(rpc_metadata['url'], 'https')
+        self.url = rpc_metadata['url']
+        self.health_uri = url_join(self.url, "/health")
+        self.client = Client(self.url, timeout=cfg.response_timeout)
+
+        self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
+        self.ws_collector = websocket_collector(self.subscribe_url,
                                                 sub_payload={
                                                     "jsonrpc": "2.0",
                                                     "id": 1,
@@ -19,8 +31,6 @@ class solana_collector():
                                                 })
         self.ws_collector.setDaemon(True)
         self.ws_collector.start()
-        self.client = Client(https_url, timeout=cfg.response_timeout)
-        self.health_uri = url_join(https_url, "/health")
 
     def is_connected(self) -> bool:
         """Health check."""

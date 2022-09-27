@@ -39,118 +39,85 @@ class prom_registry(object):
 
     def _instantiate_evm(self):
         for item in cfg.endpoints:
-            logger.info("Initializing evm node {}".format(
-                strip_url(item['ws_url'])))
-            self.collectors.append(
-                evm_collector(item['ws_url'], item['https_url'],
-                              item['provider']))
+            logger.info("Initializing evm node {}".format(strip_url(item['url'])))
+            self.collectors.append(evm_collector(item))
         self.labels = self.collectors[0].labels
 
     def _instantiate_conflux(self):
         for item in cfg.endpoints:
-            logger.info("Initializing conflux node {}".format(
-                strip_url(item['ws_url'])))
-            self.collectors.append(
-                conflux_collector(item['ws_url'], item['https_url'],
-                                  item['provider']))
+            logger.info("Initializing conflux node {}".format(strip_url(item['url'])))
+            self.collectors.append(conflux_collector(item))
         self.labels = self.collectors[0].labels
 
     def _instantiate_solana(self):
         for item in cfg.endpoints:
-            logger.info("Initializing solana node {}".format(
-                strip_url(item['https_url'])))
-            self.collectors.append(
-                solana_collector(item['ws_url'], item['https_url'],
-                                 item['provider']))
+            logger.info("Initializing solana node {}".format(strip_url(item['url'])))
+            self.collectors.append(solana_collector(item))
         self.labels = self.collectors[0].labels
 
     def _instantiate_cardano(self):
         for item in cfg.endpoints:
-            logger.info("Initializing cardano node {}".format(
-                strip_url(item['ws_url'])))
-            self.collectors.append(
-                cardano_collector(item['ws_url'], item['provider']))
+            logger.info("Initializing cardano node {}".format(strip_url(item['url'])))
+            self.collectors.append(cardano_collector(item))
             self.labels = self.collectors[0].labels
 
     def _instantiate_bitcoin(self):
         for item in cfg.endpoints:
-            logger.info("Initializing bitcoin node {}".format(
-                strip_url(item['https_url'])))
-            self.collectors.append(
-                bitcoin_collector(item['https_url'], item['provider']))
+            logger.info("Initializing bitcoin node {}".format(strip_url(item['url'])))
+            self.collectors.append(bitcoin_collector(item))
+            print(self.collectors[0].labels)
             self.labels = self.collectors[0].labels
 
     def _instantiate_doge(self):
         for item in cfg.endpoints:
-            logger.info("Initializing doge node {}".format(
-                strip_url(item['https_url'])))
-            self.collectors.append(
-                doge_collector(item['https_url'], item['provider']))
+            logger.info("Initializing doge node {}".format(strip_url(item['url'])))
+            self.collectors.append(doge_collector(item))
             self.labels = self.collectors[0].labels
 
     def _instantiate_filecoin(self):
         for item in cfg.endpoints:
-            logger.info("Initializing filecoin node {}".format(
-                strip_url(item['https_url'])))
-            self.collectors.append(
-                filecoin_collector(item['https_url'], item['provider']))
+            logger.info("Initializing filecoin node {}".format(strip_url(item['url'])))
+            self.collectors.append(filecoin_collector(item))
             self.labels = self.collectors[0].labels
 
     def _instantiate_starkware(self):
         for item in cfg.endpoints:
-            logger.info("Initializing starkware node {}".format(
-                strip_url(item['https_url'])))
-            self.collectors.append(
-                starkware_collector(item['https_url'], item['provider']))
+            logger.info("Initializing starkware node {}".format(strip_url(item['url'])))
+            self.collectors.append(starkware_collector(item))
             self.labels = self.collectors[0].labels
 
     def collect(self):
         metrics = {
             "ws_rpc_health":
-            GaugeMetricFamily(
-                'ws_rpc_health',
-                'Returns 1 if rpc websocket server established a connection with the probe client.',
-                labels=self.labels),
+            GaugeMetricFamily('ws_rpc_health',
+                              'Returns 1 if rpc websocket server established a connection with the probe client.',
+                              labels=self.labels),
             "ws_rpc_latency":
-            GaugeMetricFamily(
-                'ws_rpc_latency',
-                'Latency in milliseconds of the websocket keepalive ping.',
-                labels=self.labels),
+            GaugeMetricFamily('ws_rpc_latency',
+                              'Latency in milliseconds of the websocket keepalive ping.',
+                              labels=self.labels),
             "ws_rpc_disconnects":
-            GaugeMetricFamily('ws_rpc_disconnects',
-                              'How many times rpc has disconnected.',
-                              labels=self.labels),
+            GaugeMetricFamily('ws_rpc_disconnects', 'How many times rpc has disconnected.', labels=self.labels),
             "ws_rpc_block_height":
-            GaugeMetricFamily('ws_rpc_block_height',
-                              'Latest observed block_height.',
-                              labels=self.labels),
+            GaugeMetricFamily('ws_rpc_block_height', 'Latest observed block_height.', labels=self.labels),
             "ws_rpc_head_count":
-            CounterMetricFamily('ws_rpc_head_count',
-                                'Heads received total.',
-                                labels=self.labels),
+            CounterMetricFamily('ws_rpc_head_count', 'Heads received total.', labels=self.labels),
             "ws_rpc_difficulty":
-            GaugeMetricFamily('ws_rpc_difficulty',
-                              'Difficulty of the latest observed block.',
-                              labels=self.labels),
+            GaugeMetricFamily('ws_rpc_difficulty', 'Difficulty of the latest observed block.', labels=self.labels),
             "ws_rpc_total_difficulty":
-            GaugeMetricFamily(
-                'ws_rpc_total_difficulty',
-                'Total canonical chain difficulty observed from the first to the latest block.',
-                labels=self.labels),
-            "ws_rpc_gas_price":
-            GaugeMetricFamily('ws_rpc_gas_price',
-                              'The current gas price in Wei.',
+            GaugeMetricFamily('ws_rpc_total_difficulty',
+                              'Total canonical chain difficulty observed from the first to the latest block.',
                               labels=self.labels),
+            "ws_rpc_gas_price":
+            GaugeMetricFamily('ws_rpc_gas_price', 'The current gas price in Wei.', labels=self.labels),
             "ws_rpc_max_priority_fee":
-            GaugeMetricFamily(
-                'ws_rpc_max_priority_fee',
-                'Suggested max priority fee for dynamic fee transactions in Wei.',
-                labels=self.labels),
+            GaugeMetricFamily('ws_rpc_max_priority_fee',
+                              'Suggested max priority fee for dynamic fee transactions in Wei.',
+                              labels=self.labels),
             "ws_rpc_net_peer_count":
-            GaugeMetricFamily(
-                'ws_rpc_net_peer_count',
-                'Number of peers currently connected to the client.',
-                labels=self.labels)
+            GaugeMetricFamily('ws_rpc_net_peer_count',
+                              'Number of peers currently connected to the client.',
+                              labels=self.labels)
         }
 
         def write_metrics(prom_collector, metrics):

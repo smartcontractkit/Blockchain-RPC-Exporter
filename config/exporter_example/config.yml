@@ -19,6 +19,14 @@ endpoints: # List of endpoints with their metadata.
   - ws_url: wss://example-rpc-3.com/ws
     https_url: https://example-rpc-3.com/rpc
     provider: Provider3
+  
+  # Solana specific
+  - url: https://example-solana-rpc-1.com/rpc
+    subscribe_url: wss://example-solana-rpc-1.com/ws
+    provider: Provider3
 
 
 
+
+
+## 
