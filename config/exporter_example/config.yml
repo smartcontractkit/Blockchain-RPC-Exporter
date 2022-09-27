@@ -10,16 +10,12 @@ connection_parameters:
   ping_timeout: 3 # Liveness ping timeout
 collector: "evm" # This will load different collectors based on what mode exporter will run with Supported modes are: "evm", "solana", "conflux", "cardano", "bitcoin"
 endpoints: # List of endpoints with their metadata.
-  - ws_url: wss://example-rpc-1.com/ws # RPC Endpoint websocket endpoint (Must start with wss://)
-    https_url: https://example-rpc-1.com/rpc    # RPC Endpoint https endpoint (Must be valid https:// domain)
+  - url: wss://example-rpc-1.com/ws # RPC Endpoint websocket endpoint (Must start with wss:// or https://)
     provider: Provider1 # Provider (Must be present in allowed providers list. Please check src/settings.py line 24) The purpose is to make sure we do not have same providers spelled differently                       
-  - ws_url: wss://example-rpc-2.com/ws
-    https_url: https://example-rpc-2.com/rpc
+  - url: wss://example-rpc-2.com/ws
     provider: Provider2
-  - ws_url: wss://example-rpc-3.com/ws
-    https_url: https://example-rpc-3.com/rpc
+  - url: wss://example-rpc-3.com/ws
     provider: Provider3
-  
   # Solana specific
   - url: https://example-solana-rpc-1.com/rpc
     subscribe_url: wss://example-solana-rpc-1.com/ws
