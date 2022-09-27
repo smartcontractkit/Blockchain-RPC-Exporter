@@ -7,58 +7,56 @@ import logging
 logger = logging.getLogger('exporter')
 LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
 
-logging.basicConfig(
-    level=LOGLEVEL,
-    format=
-    "{'thread': '%(threadName)s', 'level': '%(levelname)s', 'message': '%(message)s'}"
-)
+logging.basicConfig(level=LOGLEVEL,
+                    format="{'thread': '%(threadName)s', 'level': '%(levelname)s', 'message': '%(message)s'}")
 
 
 class configuration():
 
     def __init__(self, config_file_path: str, validation_file_path: str):
-        self.allowed_providers = self._load_validation_file(
-            validation_file_path)
+        self.allowed_providers = self._load_validation_file(validation_file_path)
         self.configuration = self._load_configuration_file(config_file_path)
-        self.blockchain = self.configuration['blockchain']
-        # Load chain_id only if evm compatible collector
-        if self.configuration['collector'] not in [
-                'cardano', 'solana', 'bitcoin', 'doge', 'filecoin', 'starkware'
-        ]:
-            try:
-                self.chain_id = self.configuration['chain_id']
-            except KeyError:
-                logger.error(
-                    "This chain requires chain_id configuration, but it is not provided."
-                )
-        self.network_type = self.configuration['network_type']
-        self.network_name = self.configuration['network_name']
+        self._populate_endpoints_metadata()
+        self._populate_chain_id_metadata()
         self.endpoints = self.configuration['endpoints']
+
         try:
-            self.open_timeout = self.configuration['connection_parameters'][
-                'open_timeout']
+            self.open_timeout = self.configuration['connection_parameters']['open_timeout']
         except KeyError:
             self.open_timeout = 3
         try:
-            self.close_timeout = self.configuration['connection_parameters'][
-                'close_timeout']
+            self.close_timeout = self.configuration['connection_parameters']['close_timeout']
         except KeyError:
             self.close_timeout = 1
         try:
-            self.response_timeout = self.configuration[
-                'connection_parameters']['response_timeout']
+            self.response_timeout = self.configuration['connection_parameters']['response_timeout']
         except KeyError:
             self.response_timeout = 3
         try:
-            self.ping_interval = self.configuration['connection_parameters'][
-                'ping_interval']
+            self.ping_interval = self.configuration['connection_parameters']['ping_interval']
         except KeyError:
             self.ping_interval = 6
         try:
-            self.ping_timeout = self.configuration['connection_parameters'][
-                'ping_timeout']
+            self.ping_timeout = self.configuration['connection_parameters']['ping_timeout']
         except KeyError:
             self.ping_timeout = 2
+
+    def _populate_chain_id_metadata(self):
+        # Conditionally add chain_id based on the colelctor type to each rpc item.
+        if self.configuration['collector'] not in ['cardano', 'solana', 'bitcoin', 'doge', 'filecoin', 'starkware']:
+            try:
+                for endpoint in self.configuration['endpoints']:
+                    endpoint['chain_id'] = self.configuration['chain_id']
+            except KeyError:
+                logger.error("This chain requires chain_id configuration, but it is not provided.")
+
+    def _populate_endpoints_metadata(self):
+        """Iterates trough all of the """
+        # Add blockchain, network_name and network_type metadata to each rpc item
+        for endpoint in self.configuration['endpoints']:
+            endpoint['blockchain'] = self.configuration['blockchain']
+            endpoint['network_type'] = self.configuration['network_type']
+            endpoint['network_name'] = self.configuration['network_name']
 
     def _load_validation_file(self, path):
         logger.info('Loading {}'.format(path))
@@ -113,10 +111,8 @@ class configuration():
             'network_type':
             And(str, lambda s: s in ('Testnet', 'Mainnet')),
             'collector':
-            And(
-                str, lambda s: s in
-                ('evm', 'cardano', 'conflux', 'solana', 'bitcoin', 'doge',
-                 'filecoin', 'starkware')),
+            And(str, lambda s: s in
+                ('evm', 'cardano', 'conflux', 'solana', 'bitcoin', 'doge', 'filecoin', 'starkware')),
             Optional('connection_parameters'): {
                 Optional('open_timeout'): And(int),
                 Optional('close_timeout'): And(int),
@@ -125,9 +121,10 @@ class configuration():
                 Optional('ping_timeout'): And(int),
             },
             'endpoints': [{
-                Optional('ws_url'):
+                'url':
                 And(str),
-                Optional('https_url'):
+                # Solana specific field since solana collector uses both https and wss endpoints for probing.
+                Optional('subscribe_url'):
                 And(str),
                 'provider':
                 And(str, lambda s: s in self.allowed_providers)
@@ -151,13 +148,11 @@ class configuration():
             logger.info('Validating {}'.format(path))
             return file
         except IOError as e:
-            logger.error(
-                'Problem with configuration file detected: {}'.format(e))
+            logger.error('Problem with configuration file detected: {}'.format(e))
             exit(1)
 
 
 cfg_file_path = os.getenv('CONFIG_FILE_PATH', default='/config/config.yml')
-valid_file_path = os.getenv('VALIDATION_FILE_PATH',
-                            default='/config/validation.yml')
+valid_file_path = os.getenv('VALIDATION_FILE_PATH', default='/config/validation.yml')
 
 cfg = configuration(cfg_file_path, valid_file_path)

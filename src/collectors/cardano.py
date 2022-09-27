@@ -1,16 +1,17 @@
-from settings import cfg, logger
+from settings import logger
 import json
 from collectors.ws import websocket_collector
-from helpers import strip_url
+from helpers import strip_url, validate_protocol, generate_labels_from_metadata
 
 
 class cardano_collector():
 
-    def __init__(self, url, provider):
-        self.labels = ['url', 'provider', 'blockchain', 'network_name', 'network_type']
-        self.labels_values = [url, provider, cfg.blockchain, cfg.network_name, cfg.network_type]
-        self.url = url
-        self.ws_collector = websocket_collector(url, provider)
+    def __init__(self, rpc_metadata):
+        validate_protocol(rpc_metadata['url'], "wss")
+        self.url = rpc_metadata['url']
+
+        self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
+        self.ws_collector = websocket_collector(self.url)
 
     def _get_block_height(self):
         blk_height_payload = {
