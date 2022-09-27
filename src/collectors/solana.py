@@ -45,11 +45,11 @@ class solana_collector():
     def probe(self, metrics):
         try:
             if self.is_connected():
-                metrics['ws_rpc_health'].add_metric(self.labels_values, True)
-                metrics['ws_rpc_head_count'].add_metric(self.labels_values, self.ws_collector.message_counter)
-                metrics['ws_rpc_disconnects'].add_metric(self.labels_values, self.ws_collector.disconnects_counter)
-                metrics['ws_rpc_block_height'].add_metric(self.labels_values, self.client.get_block_height()['result'])
+                metrics['brpc_health'].add_metric(self.labels_values, True)
+                metrics['brpc_head_count'].add_metric(self.labels_values, self.ws_collector.message_counter)
+                metrics['brpc_disconnects'].add_metric(self.labels_values, self.ws_collector.disconnects_counter)
+                metrics['brpc_block_height'].add_metric(self.labels_values, self.client.get_block_height()['result'])
             else:
-                metrics['ws_rpc_health'].add_metric(self.labels_values, False)
+                metrics['brpc_health'].add_metric(self.labels_values, False)
         except Exception as exc:
             logger.error("Failed probing {} with error: {}".format(strip_url(self.url), exc))

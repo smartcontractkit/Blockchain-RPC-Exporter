@@ -1,4 +1,4 @@
-# EVM RPC Websocket Exporter
+# Blockchain RPC Exporter
 The exporter is used to scrape metrics from blockchain RPC endpoints. The purpose of this exporter is to perform black-box testing on RPC endpoints.
 ## Metrics
 Exporter currently supports all EVM-compatible chains. In addition, there is limited support for the following chains:
@@ -9,6 +9,8 @@ Exporter currently supports all EVM-compatible chains. In addition, there is lim
 - Dogecoin (https)
 - Filecoin (https)
 - Starkware (https)
+
+## Available Metrics
 
 # Disclaimer
 Please note that this tool is in the early development stage and should not be used to influence critical business decisions.

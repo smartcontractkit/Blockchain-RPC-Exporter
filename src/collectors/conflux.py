@@ -27,26 +27,26 @@ class conflux_collector():
     def probe(self, metrics):
         try:
             if self.client.isConnected():
-                metrics['ws_rpc_health'].add_metric(self.labels_values, True)
-                metrics['ws_rpc_head_count'].add_metric(self.labels_values, self.ws_collector.message_counter)
-                metrics['ws_rpc_disconnects'].add_metric(self.labels_values, self.ws_collector.disconnects_counter)
-                metrics['ws_rpc_latency'].add_metric(self.labels_values, self.ws_collector.get_latency())
-                metrics['ws_rpc_block_height'].add_metric(self.labels_values, self.client.cfx.epoch_number)
+                metrics['brpc_health'].add_metric(self.labels_values, True)
+                metrics['brpc_head_count'].add_metric(self.labels_values, self.ws_collector.message_counter)
+                metrics['brpc_disconnects'].add_metric(self.labels_values, self.ws_collector.disconnects_counter)
+                metrics['brpc_latency'].add_metric(self.labels_values, self.ws_collector.get_latency())
+                metrics['brpc_block_height'].add_metric(self.labels_values, self.client.cfx.epoch_number)
 
                 try:
                     difficulty = self.client.cfx.get_block_by_hash(self.client.cfx.get_best_block_hash())['difficulty']
-                    metrics['ws_rpc_difficulty'].add_metric(self.labels_values, difficulty)
+                    metrics['brpc_difficulty'].add_metric(self.labels_values, difficulty)
                 except TypeError:
                     logger.error(
                         "RPC Endpoint sent faulty response type when querying for difficulty. This is most likely issue with RPC endpoint."
                     )
 
-                metrics['ws_rpc_gas_price'].add_metric(self.labels_values, self.client.cfx.gas_price)
+                metrics['brpc_gas_price'].add_metric(self.labels_values, self.client.cfx.gas_price)
             else:
                 logger.info("Client is not connected to {}".format(strip_url(self.url)))
-                metrics['ws_rpc_health'].add_metric(self.labels_values, False)
+                metrics['brpc_health'].add_metric(self.labels_values, False)
         except asyncio.exceptions.TimeoutError:
             logger.info("Client timed out for {}".format(strip_url(self.url)))
-            metrics['ws_rpc_health'].add_metric(self.labels_values, False)
+            metrics['brpc_health'].add_metric(self.labels_values, False)
         except Exception as exc:
             logger.error("Failed probing {} with error: {}".format(strip_url(self.url), exc))

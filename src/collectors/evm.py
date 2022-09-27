@@ -29,36 +29,36 @@ class evm_collector():
     def probe(self, metrics):
         try:
             if self.client.isConnected():
-                metrics['ws_rpc_health'].add_metric(self.labels_values, True)
-                metrics['ws_rpc_head_count'].add_metric(self.labels_values, self.ws_collector.message_counter)
-                metrics['ws_rpc_disconnects'].add_metric(self.labels_values, self.ws_collector.disconnects_counter)
-                metrics['ws_rpc_latency'].add_metric(self.labels_values, self.ws_collector.get_latency())
-                metrics['ws_rpc_block_height'].add_metric(self.labels_values, self.client.eth.block_number)
-                metrics['ws_rpc_total_difficulty'].add_metric(self.labels_values,
+                metrics['brpc_health'].add_metric(self.labels_values, True)
+                metrics['brpc_head_count'].add_metric(self.labels_values, self.ws_collector.message_counter)
+                metrics['brpc_disconnects'].add_metric(self.labels_values, self.ws_collector.disconnects_counter)
+                metrics['brpc_latency'].add_metric(self.labels_values, self.ws_collector.get_latency())
+                metrics['brpc_block_height'].add_metric(self.labels_values, self.client.eth.block_number)
+                metrics['brpc_total_difficulty'].add_metric(self.labels_values,
                                                               self.client.eth.get_block('latest')['totalDifficulty'])
-                metrics['ws_rpc_difficulty'].add_metric(self.labels_values,
+                metrics['brpc_difficulty'].add_metric(self.labels_values,
                                                         self.client.eth.get_block('latest')['difficulty'])
 
                 try:
                     if self.net_peer_enabled:
-                        metrics['ws_rpc_net_peer_count'].add_metric(self.labels_values, self.client.net.peer_count)
+                        metrics['brpc_net_peer_count'].add_metric(self.labels_values, self.client.net.peer_count)
                 except ValueError:
                     logger.error(
                         "Net peer function is not supported for this chain, the collector will ignore this from this point on."
                     )
                     self.net_peer_enabled = False
 
-                metrics['ws_rpc_gas_price'].add_metric(self.labels_values, self.client.eth.gas_price)
-                metrics['ws_rpc_max_priority_fee'].add_metric(self.labels_values, self.client.eth.max_priority_fee)
+                metrics['brpc_gas_price'].add_metric(self.labels_values, self.client.eth.gas_price)
+                metrics['brpc_max_priority_fee'].add_metric(self.labels_values, self.client.eth.max_priority_fee)
             else:
                 logger.info("Client is not connected to {}".format(strip_url(self.url)))
-                metrics['ws_rpc_health'].add_metric(self.labels_values, False)
+                metrics['brpc_health'].add_metric(self.labels_values, False)
         except asyncio.exceptions.TimeoutError as exc:
             logger.info("Client timed out for {}: {}".format(strip_url(self.url), exc))
-            metrics['ws_rpc_health'].add_metric(self.labels_values, False)
+            metrics['brpc_health'].add_metric(self.labels_values, False)
         except WebSocketException as exc:
             logger.info("Websocket client exception {}: {}".format(strip_url(self.url), exc))
-            metrics['ws_rpc_health'].add_metric(self.labels_values, False)
+            metrics['brpc_health'].add_metric(self.labels_values, False)
         except Exception as exc:
             logger.error("Failed probing {} with error: {}".format(strip_url(self.url), exc))
-            metrics['ws_rpc_health'].add_metric(self.labels_values, False)
+            metrics['brpc_health'].add_metric(self.labels_values, False)
