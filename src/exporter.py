@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from prometheus_client import REGISTRY, make_wsgi_app
-from prometheus_client.metrics_core import GaugeMetricFamily, CounterMetricFamily
+from prometheus_client.metrics_core import GaugeMetricFamily, CounterMetricFamily, InfoMetricFamily
 from wsgiref.simple_server import make_server
 from helpers import strip_url
 from collectors.evm import evm_collector
@@ -65,7 +65,6 @@ class prom_registry(object):
         for item in cfg.endpoints:
             logger.info("Initializing bitcoin node {}".format(strip_url(item['url'])))
             self.collectors.append(bitcoin_collector(item))
-            print(self.collectors[0].labels)
             self.labels = self.collectors[0].labels
 
     def _instantiate_doge(self):
@@ -117,7 +116,11 @@ class prom_registry(object):
             "brpc_net_peer_count":
             GaugeMetricFamily('brpc_net_peer_count',
                               'Number of peers currently connected to the client.',
-                              labels=self.labels)
+                              labels=self.labels),
+            "brpc_client_version":
+            InfoMetricFamily('brpc_client_version',
+                             'Client version for the particular RPC endpoint.',
+                             labels=self.labels)
         }
 
         def write_metrics(prom_collector, metrics):

@@ -8,15 +8,8 @@ def strip_url(url):
     return urllib.parse.urlparse(url).hostname
 
 
-def validate_protocol(url, protocol):
-    if urllib.parse.urlparse(url).scheme == protocol:
-        pass
-    else:
-        logger.error("Non {} endpoint provided for {}".format(protocol, strip_url(url)))
-        exit(1)
-
-
 def check_protocol(url, protocol):
+    # Allow both ws and wss if either ws or wss is used to check protocols
     return urllib.parse.urlparse(url).scheme == protocol
 
 

@@ -1,6 +1,6 @@
 import asyncio
 from bitcoinrpc import BitcoinRPC
-from helpers import strip_url, validate_protocol, generate_labels_from_metadata
+from helpers import check_protocol, strip_url, generate_labels_from_metadata
 from time import perf_counter
 from settings import logger
 
@@ -8,9 +8,12 @@ from settings import logger
 class bitcoin_collector():
 
     def __init__(self, rpc_metadata):
-        validate_protocol(rpc_metadata['url'], "https")
         self.url = rpc_metadata['url']
-        self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
+        if check_protocol(self.url, "https"):
+            self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
+        else:
+            logger.error("Please provide https endpoint for {}".format(strip_url(self.url)))
+            exit(1)
 
     async def _probe(self, metrics):
         try:

@@ -1,4 +1,4 @@
-from helpers import strip_url, validate_protocol, generate_labels_from_metadata
+from helpers import strip_url, check_protocol, generate_labels_from_metadata
 from settings import logger
 from time import perf_counter
 import requests
@@ -7,10 +7,12 @@ import requests
 class filecoin_collector():
 
     def __init__(self, rpc_metadata):
-        validate_protocol(rpc_metadata['url'], "https")
         self.url = rpc_metadata['url']
-
-        self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
+        if check_protocol(self.url, "https"):
+            self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
+        else:
+            logger.error("Please provide https endpoint for {}".format(strip_url(self.url)))
+            exit(1)
 
     def probe(self, metrics):
         try:
