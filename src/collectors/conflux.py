@@ -1,28 +1,32 @@
 from settings import cfg, logger
 from conflux_web3 import Web3
 import asyncio
-from helpers import strip_url, validate_protocol, generate_labels_from_metadata
+from helpers import strip_url, check_protocol, generate_labels_from_metadata
 from collectors.ws import websocket_collector
 
 
 class conflux_collector():
 
     def __init__(self, rpc_metadata):
-        validate_protocol(rpc_metadata['url'], "wss")
         self.url = rpc_metadata['url']
-        self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
-        self.client = Web3(Web3.WebsocketProvider(self.url, websocket_timeout=cfg.response_timeout))
-        self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
+        if check_protocol(self.url, "wss") or check_protocol(self.url, 'ws'):
+            self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
+            self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
+            self.client = Web3(Web3.WebsocketProvider(self.url, websocket_timeout=cfg.response_timeout))
+            self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
 
-        self.ws_collector = websocket_collector(self.url,
-                                                sub_payload={
-                                                    "method": "cfx_subscribe",
-                                                    "jsonrpc": "2.0",
-                                                    "id": 1,
-                                                    "params": ["newHeads"]
-                                                })
-        self.ws_collector.setDaemon(True)
-        self.ws_collector.start()
+            self.ws_collector = websocket_collector(self.url,
+                                                    sub_payload={
+                                                        "method": "cfx_subscribe",
+                                                        "jsonrpc": "2.0",
+                                                        "id": 1,
+                                                        "params": ["newHeads"]
+                                                    })
+            self.ws_collector.setDaemon(True)
+            self.ws_collector.start()
+        else:
+            logger.error("Please provide wss/ws endpoint for {}".format(strip_url(self.url)))
+            exit(1)
 
     def probe(self, metrics):
         try:
@@ -42,6 +46,8 @@ class conflux_collector():
                     )
 
                 metrics['brpc_gas_price'].add_metric(self.labels_values, self.client.cfx.gas_price)
+                metrics['brpc_client_version'].add_metric(self.labels_values,
+                                                          value={"client_version": self.client.clientVersion})
             else:
                 logger.info("Client is not connected to {}".format(strip_url(self.url)))
                 metrics['brpc_health'].add_metric(self.labels_values, False)

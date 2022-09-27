@@ -23,22 +23,27 @@ class configuration():
         try:
             self.open_timeout = self.configuration['connection_parameters']['open_timeout']
         except KeyError:
+            logger.info("connection_parameters.open_timeout not set, defaulting to 3")
             self.open_timeout = 3
         try:
             self.close_timeout = self.configuration['connection_parameters']['close_timeout']
         except KeyError:
+            logger.info("connection_parameters.close_timeout not set, defaulting to 1")
             self.close_timeout = 1
         try:
             self.response_timeout = self.configuration['connection_parameters']['response_timeout']
         except KeyError:
+            logger.info("connection_parameters.response_timeout not set, defaulting to 3")
             self.response_timeout = 3
         try:
             self.ping_interval = self.configuration['connection_parameters']['ping_interval']
         except KeyError:
+            logger.info("connection_parameters.ping_interval not set, defaulting to 6")
             self.ping_interval = 6
         try:
             self.ping_timeout = self.configuration['connection_parameters']['ping_timeout']
         except KeyError:
+            logger.info("connection_parameters.ping_timeout not set, defaulting to 2")
             self.ping_timeout = 2
 
     def _populate_chain_id_metadata(self):
