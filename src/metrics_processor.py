@@ -51,7 +51,7 @@ class ProbeResults(object):
     def get_highest_block(self):
         highest_block = 0
         for url in self.metadata:
-            if 'brpc_block_height' in self.metadata[url]:
+            if self.metadata[url]['brpc_block_height'] != None:
                 if self.metadata[url]['brpc_block_height'] > highest_block:
                     highest_block = self.metadata[url]['brpc_block_height']
         return highest_block
@@ -59,7 +59,7 @@ class ProbeResults(object):
     def get_highest_total_difficulty(self):
         highest_total_difficulty = 0
         for url in self.metadata:
-            if 'brpc_total_difficulty' in self.metadata[url]:
+            if self.metadata[url]['brpc_total_difficulty'] != None:
                 if self.metadata[url]['brpc_total_difficulty'] > highest_total_difficulty:
                     highest_total_difficulty = self.metadata[url]['brpc_total_difficulty']
         return highest_total_difficulty
