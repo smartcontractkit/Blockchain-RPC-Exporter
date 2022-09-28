@@ -29,9 +29,9 @@ class evm_collector():
             exit(1)
 
     def probe(self) -> results:
+        results.register(self.url, self.labels_values)
         try:
             if self.client.isConnected():
-                results.register(self.url, self.labels_values)
                 results.record_health(self.url, True)
                 results.record_head_count(self.url, self.ws_collector.message_counter)
                 results.record_disconnects(self.url, self.ws_collector.disconnects_counter)
