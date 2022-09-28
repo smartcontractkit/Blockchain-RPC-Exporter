@@ -3,6 +3,7 @@ from bitcoinrpc import BitcoinRPC
 from helpers import check_protocol, strip_url, generate_labels_from_metadata
 from time import perf_counter
 from settings import logger
+from metrics_processor import results
 
 
 class bitcoin_collector():
@@ -15,20 +16,22 @@ class bitcoin_collector():
             logger.error("Please provide https endpoint for {}".format(strip_url(self.url)))
             exit(1)
 
-    async def _probe(self, metrics):
+    async def _probe(self) -> results:
+        results.register(self.url, self.labels_values)
         try:
             async with BitcoinRPC(self.url, "admin", "admin") as rpc:
                 start = perf_counter()
                 chain_info = await rpc.getblockchaininfo()
                 latency = (perf_counter() - start) * 1000
 
-                metrics['brpc_health'].add_metric(self.labels_values, True)
-                metrics['brpc_latency'].add_metric(self.labels_values, latency)
-                metrics['brpc_block_height'].add_metric(self.labels_values, chain_info['headers'])
-                metrics['brpc_total_difficulty'].add_metric(self.labels_values, chain_info['difficulty'])
+                
+                results.record_health(self.url, True)
+                results.record_latency(self.url, latency)
+                results.record_block_height(self.url, chain_info['headers'])
+                results.record_total_difficulty(self.url, chain_info['difficulty'])
         except Exception as exc:
             logger.error("Failed probing {} with error: {}".format(strip_url(self.url), exc))
-            metrics['brpc_health'].add_metric(self.labels_values, False)
+            results.record_health(self.url, False)
 
-    def probe(self, metrics):
-        asyncio.run(self._probe(metrics))
+    def probe(self):
+        asyncio.run(self._probe())
