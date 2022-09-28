@@ -2,6 +2,7 @@ from helpers import strip_url, check_protocol, generate_labels_from_metadata
 from settings import logger
 from time import perf_counter
 import requests
+from metrics_processor import results
 
 
 class filecoin_collector():
@@ -14,7 +15,8 @@ class filecoin_collector():
             logger.error("Please provide https endpoint for {}".format(strip_url(self.url)))
             exit(1)
 
-    def probe(self, metrics):
+    def probe(self) -> results:
+        results.register(self.url, self.labels_values)
         try:
             payload = {'jsonrpc': '2.0', 'method': "Filecoin.ChainHead", 'id': 1}
             start = perf_counter()
@@ -22,16 +24,16 @@ class filecoin_collector():
             latency = (perf_counter() - start) * 1000
 
             if response.ok:
-                metrics['brpc_health'].add_metric(self.labels_values, True)
-                metrics['brpc_latency'].add_metric(self.labels_values, latency)
-                metrics['brpc_block_height'].add_metric(self.labels_values, response.json()['result']['Height'])
+                results.record_health(self.url, True)
+                results.record_latency(self.url, latency)
+                results.record_block_height(self.url, response.json()['result']['Height'])
             else:
                 logger.error("Bad response from client while fetching Filecoin.ChainHead method for {}: {}".format(
                     strip_url(self.url), response))
-                metrics['brpc_health'].add_metric(self.labels_values, False)
+                results.record_health(self.url, False)
         except requests.RequestException as exc:
             logger.error("Health check failed for {}: {}".format(strip_url(self.url), exc))
-            metrics['brpc_health'].add_metric(self.labels_values, False)
+            results.record_health(self.url, False)
         except Exception as e:
             logger.error("Health check failed for {}: {}".format(strip_url(self.url), e))
-            metrics['brpc_health'].add_metric(self.labels_values, False)
+            results.record_health(self.url, False)

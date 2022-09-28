@@ -4,6 +4,7 @@ import asyncio
 from helpers import strip_url, check_protocol, generate_labels_from_metadata
 from collectors.ws import websocket_collector
 from websockets.exceptions import WebSocketException
+from metrics_processor import results
 
 
 class evm_collector():
@@ -12,9 +13,7 @@ class evm_collector():
         self.url = rpc_metadata['url']
         if check_protocol(rpc_metadata['url'], "wss") or check_protocol(rpc_metadata['url'], 'ws'):
             self.client = Web3(Web3.WebsocketProvider(self.url, websocket_timeout=cfg.response_timeout))
-
             self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
-
             self.ws_collector = websocket_collector(self.url,
                                                     sub_payload={
                                                         "method": "eth_subscribe",
@@ -24,35 +23,34 @@ class evm_collector():
                                                     })
             self.ws_collector.setDaemon(True)
             self.ws_collector.start()
+
         else:
             logger.error("Please provide wss/ws endpoint for {}".format(strip_url(self.url)))
             exit(1)
 
-    def probe(self, metrics):
+    def probe(self) -> results:
+        results.register(self.url, self.labels_values)
         try:
             if self.client.isConnected():
-                metrics['brpc_health'].add_metric(self.labels_values, True)
-                metrics['brpc_head_count'].add_metric(self.labels_values, self.ws_collector.message_counter)
-                metrics['brpc_disconnects'].add_metric(self.labels_values, self.ws_collector.disconnects_counter)
-                metrics['brpc_latency'].add_metric(self.labels_values, self.ws_collector.get_latency())
-                metrics['brpc_block_height'].add_metric(self.labels_values, self.client.eth.block_number)
-                metrics['brpc_total_difficulty'].add_metric(self.labels_values,
-                                                            self.client.eth.get_block('latest')['totalDifficulty'])
-                metrics['brpc_difficulty'].add_metric(self.labels_values,
-                                                      self.client.eth.get_block('latest')['difficulty'])
-                metrics['brpc_gas_price'].add_metric(self.labels_values, self.client.eth.gas_price)
-                metrics['brpc_max_priority_fee'].add_metric(self.labels_values, self.client.eth.max_priority_fee)
-                metrics['brpc_client_version'].add_metric(self.labels_values,
-                                                          value={"client_version": self.client.clientVersion})
+                results.record_health(self.url, True)
+                results.record_head_count(self.url, self.ws_collector.message_counter)
+                results.record_disconnects(self.url, self.ws_collector.disconnects_counter)
+                results.record_latency(self.url, self.ws_collector.get_latency())
+                results.record_block_height(self.url, self.client.eth.block_number)
+                results.record_total_difficulty(self.url, self.client.eth.get_block('latest')['totalDifficulty'])
+                results.record_difficulty(self.url, self.client.eth.get_block('latest')['difficulty'])
+                results.record_gas_price(self.url, self.client.eth.gas_price)
+                results.record_max_priority_fee(self.url, self.client.eth.max_priority_fee)
+                results.record_client_version(self.url, self.client.clientVersion)
             else:
                 logger.info("Client is not connected to {}".format(strip_url(self.url)))
-                metrics['brpc_health'].add_metric(self.labels_values, False)
+                results.record_health(self.url, False)
         except asyncio.exceptions.TimeoutError as exc:
             logger.info("Client timed out for {}: {}".format(strip_url(self.url), exc))
-            metrics['brpc_health'].add_metric(self.labels_values, False)
+            results.record_health(self.url, False)
         except WebSocketException as exc:
             logger.info("Websocket client exception {}: {}".format(strip_url(self.url), exc))
-            metrics['brpc_health'].add_metric(self.labels_values, False)
+            results.record_health(self.url, False)
         except Exception as exc:
             logger.error("Failed probing {} with error: {}".format(strip_url(self.url), exc))
-            metrics['brpc_health'].add_metric(self.labels_values, False)
+            results.record_health(self.url, False)

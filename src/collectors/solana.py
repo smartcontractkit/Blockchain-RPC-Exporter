@@ -3,7 +3,7 @@ from solana.rpc.api import Client
 from helpers import strip_url, url_join, check_protocol, generate_labels_from_metadata
 from collectors.ws import websocket_collector
 import requests
-
+from metrics_processor import results
 
 class solana_collector():
 
@@ -48,14 +48,16 @@ class solana_collector():
             return False
         return response.ok
 
-    def probe(self, metrics):
+    def probe(self) -> results:
+        results.register(self.url, self.labels_values)
         try:
             if self.is_connected():
-                metrics['brpc_health'].add_metric(self.labels_values, True)
-                metrics['brpc_head_count'].add_metric(self.labels_values, self.ws_collector.message_counter)
-                metrics['brpc_disconnects'].add_metric(self.labels_values, self.ws_collector.disconnects_counter)
-                metrics['brpc_block_height'].add_metric(self.labels_values, self.client.get_block_height()['result'])
+                results.record_health(self.url, True)
+                results.record_head_count(self.url, self.ws_collector.message_counter)
+                results.record_disconnects(self.url, self.ws_collector.disconnects_counter)
+                results.record_block_height(self.url, self.client.get_block_height()['result'])
             else:
-                metrics['brpc_health'].add_metric(self.labels_values, False)
+                results.record_health(self.url, False)
         except Exception as exc:
             logger.error("Failed probing {} with error: {}".format(strip_url(self.url), exc))
+            results.record_health(self.url, False)
