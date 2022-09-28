@@ -101,7 +101,7 @@ class ProbeResults(object):
                 if self.metadata[url]['brpc_gas_price'] != None:
                     metrics['brpc_gas_price'].add_metric(self.metadata[url]['label_values'],
                                                          self.metadata[url]['brpc_gas_price'])
-                if self.metadata[url]['brpc_gas_price'] != None:
+                if self.metadata[url]['brpc_max_priority_fee'] != None:
                     metrics['brpc_max_priority_fee'].add_metric(self.metadata[url]['label_values'],
                                                                 self.metadata[url]['brpc_max_priority_fee'])
                 if self.metadata[url]['brpc_client_version'] != None:

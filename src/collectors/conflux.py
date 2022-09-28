@@ -3,6 +3,7 @@ from conflux_web3 import Web3
 import asyncio
 from helpers import strip_url, check_protocol, generate_labels_from_metadata
 from collectors.ws import websocket_collector
+from metrics_processor import results
 
 
 class conflux_collector():
@@ -28,31 +29,30 @@ class conflux_collector():
             logger.error("Please provide wss/ws endpoint for {}".format(strip_url(self.url)))
             exit(1)
 
-    def probe(self, metrics):
+    def probe(self):
+        results.register(self.url, self.labels_values)
         try:
             if self.client.isConnected():
-                metrics['brpc_health'].add_metric(self.labels_values, True)
-                metrics['brpc_head_count'].add_metric(self.labels_values, self.ws_collector.message_counter)
-                metrics['brpc_disconnects'].add_metric(self.labels_values, self.ws_collector.disconnects_counter)
-                metrics['brpc_latency'].add_metric(self.labels_values, self.ws_collector.get_latency())
-                metrics['brpc_block_height'].add_metric(self.labels_values, self.client.cfx.epoch_number)
-
+                results.record_health(self.url, True)
+                results.record_head_count(self.url, self.ws_collector.message_counter)
+                results.record_disconnects(self.url, self.ws_collector.disconnects_counter)
+                results.record_latency(self.url, self.ws_collector.get_latency())
+                results.record_block_height(self.url, self.client.cfx.epoch_number)
                 try:
                     difficulty = self.client.cfx.get_block_by_hash(self.client.cfx.get_best_block_hash())['difficulty']
-                    metrics['brpc_difficulty'].add_metric(self.labels_values, difficulty)
+                    results.record_difficulty(self.url, difficulty)
                 except TypeError:
                     logger.error(
                         "RPC Endpoint sent faulty response type when querying for difficulty. This is most likely issue with RPC endpoint."
                     )
-
-                metrics['brpc_gas_price'].add_metric(self.labels_values, self.client.cfx.gas_price)
-                metrics['brpc_client_version'].add_metric(self.labels_values,
-                                                          value={"client_version": self.client.clientVersion})
+                results.record_gas_price(self.url, self.client.cfx.gas_price)
+                results.record_client_version(self.url, self.client.clientVersion)
             else:
                 logger.info("Client is not connected to {}".format(strip_url(self.url)))
-                metrics['brpc_health'].add_metric(self.labels_values, False)
+                results.record_health(self.url, False)
         except asyncio.exceptions.TimeoutError:
             logger.info("Client timed out for {}".format(strip_url(self.url)))
-            metrics['brpc_health'].add_metric(self.labels_values, False)
+            results.record_health(self.url, False)
         except Exception as exc:
             logger.error("Failed probing {} with error: {}".format(strip_url(self.url), exc))
+            results.record_health(self.url, False)
