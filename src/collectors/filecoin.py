@@ -15,7 +15,7 @@ class filecoin_collector():
             logger.error("Please provide https endpoint for {}".format(strip_url(self.url)))
             exit(1)
 
-    def probe(self):
+    def probe(self) -> results:
         results.register(self.url, self.labels_values)
         try:
             payload = {'jsonrpc': '2.0', 'method': "Filecoin.ChainHead", 'id': 1}

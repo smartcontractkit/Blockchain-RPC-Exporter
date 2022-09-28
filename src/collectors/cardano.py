@@ -31,7 +31,7 @@ class cardano_collector():
         except KeyError as err:
             logger.error("Failed to fetch block height for {}, error: {}".format(strip_url(self.url), err))
 
-    def probe(self):
+    def probe(self) -> results:
         results.register(self.url, self.labels_values)
         try:
             alive = self.ws_collector.get_liveliness()

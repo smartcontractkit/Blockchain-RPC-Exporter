@@ -29,7 +29,7 @@ class conflux_collector():
             logger.error("Please provide wss/ws endpoint for {}".format(strip_url(self.url)))
             exit(1)
 
-    def probe(self):
+    def probe(self) -> results:
         results.register(self.url, self.labels_values)
         try:
             if self.client.isConnected():
