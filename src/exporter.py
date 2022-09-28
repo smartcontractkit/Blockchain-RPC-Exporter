@@ -12,6 +12,7 @@ from collectors.dogecoin import doge_collector
 from collectors.filecoin import filecoin_collector
 from collectors.starkware import starkware_collector
 from settings import logger, cfg
+from metrics_processor import results
 
 
 class prom_registry(object):
@@ -120,15 +121,25 @@ class prom_registry(object):
             "brpc_client_version":
             InfoMetricFamily('brpc_client_version',
                              'Client version for the particular RPC endpoint.',
-                             labels=self.labels)
+                             labels=self.labels),
+            "brpc_block_height_behind_highest":
+            GaugeMetricFamily('brpc_block_height_behind_highest',
+                              'Number of blocks behind highest in the pool.',
+                              labels=self.labels),
+            "brpc_difficulty_behind_highest":
+            GaugeMetricFamily('brpc_difficulty_behind_highest',
+                              'Delta compared between highest total difficulty of the latest block in the pool.',
+                              labels=self.labels),   
         }
 
-        def write_metrics(prom_collector, metrics):
-            prom_collector.probe(metrics)
+        def collect_metrics(prom_collector):
+            prom_collector.probe()
 
         with ThreadPoolExecutor(max_workers=len(self.collectors)) as executor:
             for collector in self.collectors:
-                executor.submit(write_metrics, collector, metrics)
+                executor.submit(collect_metrics, collector)
+        # Process the collected metrics
+        results.write_metrics(metrics)
 
         for _, metric in metrics.items():
             # Only yield metric if samples were provided by the probe
