@@ -24,7 +24,6 @@ class bitcoin_collector():
                 chain_info = await rpc.getblockchaininfo()
                 latency = (perf_counter() - start) * 1000
 
-                
                 results.record_health(self.url, True)
                 results.record_latency(self.url, latency)
                 results.record_block_height(self.url, chain_info['headers'])

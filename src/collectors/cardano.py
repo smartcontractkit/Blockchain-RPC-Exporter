@@ -2,6 +2,7 @@ from settings import logger
 import json
 from collectors.ws import websocket_collector
 from helpers import check_protocol, strip_url, generate_labels_from_metadata
+from metrics_processor import results
 
 
 class cardano_collector():
@@ -30,14 +31,16 @@ class cardano_collector():
         except KeyError as err:
             logger.error("Failed to fetch block height for {}, error: {}".format(strip_url(self.url), err))
 
-    def probe(self, metrics):
+    def probe(self):
+        results.register(self.url, self.labels_values)
         try:
             alive = self.ws_collector.get_liveliness()
             if alive:
-                metrics['brpc_health'].add_metric(self.labels_values, True)
-                metrics['brpc_latency'].add_metric(self.labels_values, self.ws_collector.get_latency())
-                metrics['brpc_block_height'].add_metric(self.labels_values, self._get_block_height())
+                results.record_health(self.url, True)
+                results.record_latency(self.url, self.ws_collector.get_latency())
+                results.record_block_height(self.url, self._get_block_height())
             else:
-                metrics['brpc_health'].add_metric(self.labels_values, False)
+                results.record_health(self.url, False)
         except Exception as exc:
             logger.error("Failed probing {} with error: {}".format(strip_url(self.url), exc))
+            results.record_health(self.url, False)
