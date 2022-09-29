@@ -25,6 +25,7 @@ class evm_collector():
             self.ws_collector.setDaemon(True)
             self.ws_collector.start()
             self.record_difficulty = True
+            self.record_max_priority_fee = True
 
         else:
             logger.error("Please provide wss/ws endpoint for {}".format(strip_url(self.url)))
@@ -44,10 +45,15 @@ class evm_collector():
                         results.record_total_difficulty(self.url, self.client.eth.get_block('latest')['totalDifficulty'])
                         results.record_difficulty(self.url, self.client.eth.get_block('latest')['difficulty'])
                 except ExtraDataLengthError:
-                    logger.info("It looks like this is a POA chain, and does not use difficulty anymore. Collector will ignore difficulty metric from this point on")
+                    logger.info("It looks like this is a POA chain, and does not use difficulty anymore. Collector will ignore difficulty metric from this point on.")
                     self.record_difficulty = False
+                try:
+                    if self.record_max_priority_fee:
+                        results.record_max_priority_fee(self.url, self.client.eth.max_priority_fee)
+                except ValueError:
+                    self.record_max_priority_fee = False
+                    logger.info("It look slike max_priority_fee method is not supported on this chain. Collector will ignore difficulty metric from this point on.")
                 results.record_gas_price(self.url, self.client.eth.gas_price)
-                results.record_max_priority_fee(self.url, self.client.eth.max_priority_fee)
                 results.record_client_version(self.url, self.client.clientVersion)
             else:
                 logger.info("Client is not connected to {}".format(strip_url(self.url)))
