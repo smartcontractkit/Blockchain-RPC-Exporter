@@ -29,7 +29,7 @@ class bitcoin_collector():
                 results.record_block_height(self.url, chain_info['headers'])
                 results.record_total_difficulty(self.url, chain_info['difficulty'])
         except Exception as exc:
-            logger.error("Failed probing {} with error: {}".format(strip_url(self.url), exc))
+            logger.error("Failed probing {} with error: {} of type: {}".format(strip_url(self.url), exc, type(exc)))
             results.record_health(self.url, False)
 
     def probe(self):

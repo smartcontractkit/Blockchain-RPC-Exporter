@@ -44,7 +44,7 @@ class evm_collector():
                     if self.record_difficulty:
                         results.record_total_difficulty(self.url, self.client.eth.get_block('latest')['totalDifficulty'])
                         results.record_difficulty(self.url, self.client.eth.get_block('latest')['difficulty'])
-                except ExtraDataLengthError:
+                except (ExtraDataLengthError, KeyError):
                     logger.info("It looks like this is a POA chain, and does not use difficulty anymore. Collector will ignore difficulty metric from this point on.")
                     self.record_difficulty = False
                 try:
