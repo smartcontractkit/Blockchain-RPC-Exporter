@@ -1,9 +1,8 @@
-import asyncio
-from bitcoinrpc import BitcoinRPC
 from helpers import check_protocol, strip_url, generate_labels_from_metadata
 from time import perf_counter
 from settings import logger
 from metrics_processor import results
+import requests
 
 
 class bitcoin_collector():
@@ -16,21 +15,25 @@ class bitcoin_collector():
             logger.error("Please provide https endpoint for {}".format(strip_url(self.url)))
             exit(1)
 
-    async def _probe(self) -> results:
+    def probe(self) -> results:
         results.register(self.url, self.labels_values)
         try:
-            async with BitcoinRPC(self.url, "admin", "admin") as rpc:
-                start = perf_counter()
-                chain_info = await rpc.getblockchaininfo()
-                latency = (perf_counter() - start) * 1000
+            payload = {"jsonrpc": "1.0", "id": "exporter", "method": "getblockchaininfo", "params": []}
+            start = perf_counter()
+            response = requests.post(self.url, json=payload).json()
+            latency = (perf_counter() - start) * 1000
 
+            if response:
                 results.record_health(self.url, True)
                 results.record_latency(self.url, latency)
-                results.record_block_height(self.url, chain_info['headers'])
-                results.record_total_difficulty(self.url, chain_info['difficulty'])
-        except Exception as exc:
-            logger.error("Failed probing {} with error: {} of type: {}".format(strip_url(self.url), exc, type(exc)))
+                results.record_block_height(self.url, response['result']['blocks'])
+                results.record_total_difficulty(self.url, response['result']['difficulty'])
+            else:
+                logger.error("Bad response from client {}: {}".format(strip_url(self.url), exc))
+                results.record_health(self.url, False)
+        except requests.RequestException as exc:
+            logger.error("Health check failed for {}: {}".format(strip_url(self.url), exc))
             results.record_health(self.url, False)
-
-    def probe(self):
-        asyncio.run(self._probe())
+        except Exception as exc:
+            logger.error("Health check failed for {}: {}".format(strip_url(self.url), exc))
+            results.record_health(self.url, False)
