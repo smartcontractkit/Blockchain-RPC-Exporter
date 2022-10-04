@@ -21,17 +21,17 @@ class configuration():
         try:
             self.open_timeout = self.configuration['connection_parameters']['open_timeout']
         except KeyError:
-            self.open_timeout = 5
+            self.open_timeout = 7
             logger.info(f"connection_parameters.open_timeout not set, defaulting to {self.open_timeout}")
         try:
             self.close_timeout = self.configuration['connection_parameters']['close_timeout']
         except KeyError:
-            self.close_timeout = 4
+            self.close_timeout = 3
             logger.info(f"connection_parameters.close_timeout not set, defaulting to {self.close_timeout}")
         try:
             self.response_timeout = self.configuration['connection_parameters']['response_timeout']
         except KeyError:
-            self.response_timeout = 5
+            self.response_timeout = 7
             logger.info(f"connection_parameters.response_timeout not set, defaulting to {self.response_timeout}")
         try:
             self.ping_interval = self.configuration['connection_parameters']['ping_interval']
@@ -41,7 +41,7 @@ class configuration():
         try:
             self.ping_timeout = self.configuration['connection_parameters']['ping_timeout']
         except KeyError:
-            self.ping_timeout = 4
+            self.ping_timeout = 7
             logger.info(f"connection_parameters.ping_timeout not set, defaulting to {self.ping_timeout}")
     def _populate_chain_id_metadata(self):
         # Conditionally add chain_id based on the colelctor type to each rpc item.
