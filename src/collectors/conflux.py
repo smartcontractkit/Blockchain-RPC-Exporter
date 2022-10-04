@@ -1,58 +1,54 @@
-from settings import cfg, logger
-from conflux_web3 import Web3
-import asyncio
-from helpers import strip_url, check_protocol, generate_labels_from_metadata
-from collectors.ws import websocket_collector
+from settings import logger, cfg
+from helpers import strip_url, generate_labels_from_metadata, hex_to_int, key_from_json_str
 from metrics_processor import results
+
+from collectors.ws import subscription, fetch_latency
+import websockets
+import asyncio
+import json
 
 
 class conflux_collector():
 
     def __init__(self, rpc_metadata):
-        self.url = rpc_metadata['url']
-        if check_protocol(self.url, "wss") or check_protocol(self.url, 'ws'):
-            self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
-            self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
-            self.client = Web3(Web3.WebsocketProvider(self.url, websocket_timeout=cfg.response_timeout))
-            self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
+        self.url, self.chain_id, self.stripped_url = rpc_metadata['url'], rpc_metadata['chain_id'], strip_url(
+            rpc_metadata['url'])
+        self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
 
-            self.ws_collector = websocket_collector(self.url,
-                                                    sub_payload={
-                                                        "method": "cfx_subscribe",
-                                                        "jsonrpc": "2.0",
-                                                        "id": 1,
-                                                        "params": ["newHeads"]
-                                                    })
-            self.ws_collector.setDaemon(True)
-            self.ws_collector.start()
-        else:
-            logger.error("Please provide wss/ws endpoint for {}".format(strip_url(self.url)))
-            exit(1)
+        sub_payload = {"method": "cfx_subscribe", "jsonrpc": "2.0", "id": 1, "params": ["newHeads"]}
+        self.sub = subscription(self.url, sub_payload)
+        self.sub.isDaemon()
+        self.sub.start()
 
-    def probe(self) -> results:
+    async def _cfx_clientVersion(self, websocket):
+        payload = {"jsonrpc": "2.0", "method": "cfx_clientVersion", "params": [], "id": 1}
+        await websocket.send(json.dumps(payload))
+        result = await websocket.recv()
+        return key_from_json_str(result, "result")
+
+    async def _cfx_epochNumber(self, websocket):
+        payload = {"jsonrpc": "2.0", "method": "cfx_epochNumber", "params": [], "id": 1}
+        await websocket.send(json.dumps(payload))
+        result = await websocket.recv()
+        return hex_to_int(key_from_json_str(result, "result"))
+
+    async def _probe(self) -> results:
         results.register(self.url, self.labels_values)
         try:
-            if self.client.isConnected():
+            async with websockets.connect(self.url,
+                                          open_timeout=cfg.open_timeout,
+                                          close_timeout=cfg.close_timeout,
+                                          ping_interval=cfg.ping_interval,
+                                          ping_timeout=cfg.ping_timeout) as websocket:
+                results.record_latency(self.url, await fetch_latency(websocket))
                 results.record_health(self.url, True)
-                results.record_head_count(self.url, self.ws_collector.message_counter)
-                results.record_disconnects(self.url, self.ws_collector.disconnects_counter)
-                results.record_latency(self.url, self.ws_collector.get_latency())
-                results.record_block_height(self.url, self.client.cfx.epoch_number)
-                try:
-                    difficulty = self.client.cfx.get_block_by_hash(self.client.cfx.get_best_block_hash())['difficulty']
-                    results.record_difficulty(self.url, difficulty)
-                except TypeError:
-                    logger.error(
-                        "RPC Endpoint sent faulty response type when querying for difficulty. This is most likely issue with RPC endpoint."
-                    )
-                results.record_gas_price(self.url, self.client.cfx.gas_price)
-                results.record_client_version(self.url, self.client.clientVersion)
-            else:
-                logger.info("Client is not connected to {}".format(strip_url(self.url)))
-                results.record_health(self.url, False)
-        except asyncio.exceptions.TimeoutError:
-            logger.info("Client timed out for {}".format(strip_url(self.url)))
-            results.record_health(self.url, False)
+                results.record_block_height(self.url, await self._cfx_epochNumber(websocket))
+                results.record_client_version(self.url, await self._cfx_clientVersion(websocket))
+                results.record_head_count(self.url, self.sub.head_counter)
+                results.record_disconnects(self.url, self.sub.disconnects)
         except Exception as exc:
-            logger.error("Failed probing {} with error: {}".format(strip_url(self.url), exc))
             results.record_health(self.url, False)
+            logger.error(f"{exc}", url=self.stripped_url)
+
+    def probe(self):
+        asyncio.run(self._probe())

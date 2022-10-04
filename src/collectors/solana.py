@@ -1,63 +1,47 @@
-from settings import cfg, logger
-from solana.rpc.api import Client
-from helpers import strip_url, url_join, check_protocol, generate_labels_from_metadata
-from collectors.ws import websocket_collector
+from settings import logger
+from helpers import strip_url, generate_labels_from_metadata
 import requests
 from metrics_processor import results
+from time import perf_counter
+from collectors.ws import subscription
+from collectors.https import https_connection
+
 
 class solana_collector():
 
     def __init__(self, rpc_metadata):
-        self.url = rpc_metadata['url']
-        if check_protocol(self.url, "https"):
-            self.health_uri = url_join(self.url, "/health")
-            self.client = Client(self.url, timeout=cfg.response_timeout)
+        self.url, self.subscribe_url, self.stripped_url = rpc_metadata['url'], rpc_metadata['subscribe_url'], strip_url(
+            rpc_metadata['url'])
+        self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
+        self.client = https_connection(self.url)
 
-            self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
-        else:
-            logger.error("Please provide https endpoint for {}".format(strip_url(self.url)))
-            exit(1)
+        sub_payload = {"method": "slotSubscribe", "jsonrpc": "2.0", "id": 1}
+        self.sub = subscription(self.subscribe_url, sub_payload)
+        self.sub.isDaemon()
+        self.sub.start()
 
-        try:
-            self.subscribe_url = rpc_metadata['subscribe_url']
-        except KeyError:
-            logger.error(
-                "Please note that solana collector requires subscribe_url websocket endpoint on top of regular url. Please refer to example configuration for example"
-            )
+    def _get_client_version(self):
+        payload = {'jsonrpc': '2.0', 'method': "getVersion", 'id': 1}
+        response = requests.post(self.url, json=payload).json()['result']['solana-core']
+        return response
 
-        if check_protocol(self.subscribe_url, "wss") or check_protocol(self.subscribe_url, 'ws'):
-            self.ws_collector = websocket_collector(self.subscribe_url,
-                                                    sub_payload={
-                                                        "jsonrpc": "2.0",
-                                                        "id": 1,
-                                                        "method": "slotSubscribe"
-                                                    })
-            self.ws_collector.setDaemon(True)
-            self.ws_collector.start()
-        else:
-            logger.error("Please provide wss/ws endpoint for {}".format(strip_url(self.url)))
-            exit(1)
-
-    def is_connected(self) -> bool:
-        """Health check."""
-        try:
-            response = requests.get(self.health_uri, timeout=cfg.response_timeout)
-            response.raise_for_status()
-        except (IOError, requests.HTTPError) as err:
-            logger.error("Health check failed for {}: {}".format(strip_url(self.health_uri), err))
-            return False
-        return response.ok
+    def _get_block_height(self):
+        payload = {'jsonrpc': '2.0', 'method': "getBlockHeight", 'id': 1}
+        response = requests.post(self.url, json=payload).json()
+        return response['result']
 
     def probe(self) -> results:
         results.register(self.url, self.labels_values)
+        health_check_payload = {'jsonrpc': '2.0', 'method': "getVersion", 'id': 1}
         try:
-            if self.is_connected():
+            if self.client.is_connected_post_check(health_check_payload):
+                results.record_latency(self.url, self.client.get_latency(health_check_payload))
                 results.record_health(self.url, True)
-                results.record_head_count(self.url, self.ws_collector.message_counter)
-                results.record_disconnects(self.url, self.ws_collector.disconnects_counter)
-                results.record_block_height(self.url, self.client.get_block_height()['result'])
+                results.record_client_version(self.url, self._get_client_version())
+                results.record_block_height(self.url, self._get_block_height())
+                results.record_head_count(self.url, self.sub.head_counter)
             else:
                 results.record_health(self.url, False)
         except Exception as exc:
-            logger.error("Failed probing {} with error: {}".format(strip_url(self.url), exc))
+            logger.error(f"{exc}", url=self.stripped_url)
             results.record_health(self.url, False)

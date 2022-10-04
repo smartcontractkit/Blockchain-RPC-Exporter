@@ -1,29 +1,18 @@
 import urllib.parse
-from settings import logger
+from time import perf_counter
+import json
 
 
 def strip_url(url):
-    """This function strips the url from all parameters, usernames and passwords.
+    """Returns a stripped url from all parameters, usernames or passwords if present.
     It is used to safely log errors without exposing keys and authentication parameters."""
     return urllib.parse.urlparse(url).hostname
 
 
-def check_protocol(url, protocol):
-    # Allow both ws and wss if either ws or wss is used to check protocols
-    return urllib.parse.urlparse(url).scheme == protocol
-
-
-def url_join(url, target_path):
-    """Function takes url, and returns url + target path. This function also preserves 
-    all of the url parameters if they are present. 
-    This is important since different RPCs use different auth mechanisms (path or parameter)"""
-    scheme, netloc, path, params, query, fragment = urllib.parse.urlparse(url)
-    path = path + target_path
-    path = path.replace('//', '/')
-    return urllib.parse.urlunparse((scheme, netloc, path, params, query, fragment))
-
-
 def generate_labels_from_metadata(rpc_metadata):
+    """This function returns a fixed dict `labels` which never changes, these will eventually become prometheus labels.
+    In addition, it takes rpc_metadata dict, and extracts values for each of the static labels."""
+
     labels = ['url', 'provider', 'blockchain', 'network_name', 'network_type']
     label_values = [
         rpc_metadata['url'], rpc_metadata['provider'], rpc_metadata['blockchain'], rpc_metadata['network_name'],
@@ -35,3 +24,11 @@ def generate_labels_from_metadata(rpc_metadata):
         label_values.append(str(rpc_metadata['chain_id']))
 
     return labels, label_values
+
+
+def hex_to_int(hex_value):
+    return int(hex_value, 16)
+
+
+def key_from_json_str(json_body, key):
+    return json.loads(json_body)[key]
