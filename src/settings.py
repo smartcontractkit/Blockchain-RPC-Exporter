@@ -43,6 +43,7 @@ class configuration():
         except KeyError:
             self.ping_timeout = 7
             logger.info(f"connection_parameters.ping_timeout not set, defaulting to {self.ping_timeout}")
+
     def _populate_chain_id_metadata(self):
         # Conditionally add chain_id based on the colelctor type to each rpc item.
         if self.configuration['collector'] not in ['cardano', 'solana', 'bitcoin', 'doge', 'filecoin', 'starkware']:

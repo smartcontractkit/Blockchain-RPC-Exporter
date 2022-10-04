@@ -1,11 +1,10 @@
 from settings import logger, cfg
 from helpers import strip_url, generate_labels_from_metadata, hex_to_int, key_from_json_str
 from metrics_processor import results
-
 from collectors.ws import subscription, fetch_latency
+import json
 import websockets
 import asyncio
-import json
 
 
 class evm_collector():
@@ -23,13 +22,13 @@ class evm_collector():
     async def _web3_clientVersion(self, websocket):
         payload = {"jsonrpc": "2.0", "method": "web3_clientVersion", "params": [], "id": self.chain_id}
         await websocket.send(json.dumps(payload))
-        result = await websocket.recv()
+        result = await asyncio.wait_for(websocket.recv(), timeout=cfg.response_timeout)
         return key_from_json_str(result, "result")
 
     async def _eth_blockNumber(self, websocket):
         payload = {"jsonrpc": "2.0", "method": "eth_blockNumber", "params": [], "id": self.chain_id}
         await websocket.send(json.dumps(payload))
-        result = await websocket.recv()
+        result = await asyncio.wait_for(websocket.recv(), timeout=cfg.response_timeout)
         return hex_to_int(key_from_json_str(result, "result"))
 
     async def _probe(self) -> results:
@@ -49,7 +48,7 @@ class evm_collector():
                 results.record_disconnects(self.url, self.sub.disconnects)
         except asyncio.exceptions.TimeoutError:
             logger.error(
-                f"Timed out while trying to establish websocket connection. Current open_timeout value in config: {cfg.open_timeout}.",
+                f"Timed out while trying to establish websocket connection. Current response_timeout value in config: {cfg.response_timeout}.",
                 url=self.stripped_url)
             results.record_health(self.url, False)
         except Exception as exc:
