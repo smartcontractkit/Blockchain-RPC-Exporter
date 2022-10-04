@@ -38,6 +38,11 @@ class cardano_collector():
                 results.record_latency(self.url, await fetch_latency(websocket))
                 results.record_health(self.url, True)
                 results.record_block_height(self.url, await self._blockHeight(websocket))
+        except asyncio.exceptions.TimeoutError:
+            logger.error(
+                f"Timed out while trying to establish websocket connection. Current open_timeout value in config: {cfg.open_timeout}.",
+                url=self.stripped_url)
+            results.record_health(self.url, False)
         except Exception as exc:
             results.record_health(self.url, False)
             logger.error(f"{exc}", url=self.stripped_url)
