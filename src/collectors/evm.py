@@ -1,69 +1,55 @@
-from settings import cfg, logger
-from web3 import Web3
-from web3.exceptions import ExtraDataLengthError
-import asyncio
-from helpers import strip_url, check_protocol, generate_labels_from_metadata
-from collectors.ws import websocket_collector
-from websockets.exceptions import WebSocketException
+from settings import logger, cfg
+from helpers import strip_url, generate_labels_from_metadata, hex_to_int, key_from_json_str
 from metrics_processor import results
+
+from collectors.ws import subscription, fetch_latency
+import websockets
+import asyncio
+import json
 
 
 class evm_collector():
 
     def __init__(self, rpc_metadata):
-        self.url = rpc_metadata['url']
-        if check_protocol(rpc_metadata['url'], "wss") or check_protocol(rpc_metadata['url'], 'ws'):
-            self.client = Web3(Web3.WebsocketProvider(self.url, websocket_timeout=cfg.response_timeout))
-            self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
-            self.ws_collector = websocket_collector(self.url,
-                                                    sub_payload={
-                                                        "method": "eth_subscribe",
-                                                        "jsonrpc": "2.0",
-                                                        "id": rpc_metadata['chain_id'],
-                                                        "params": ["newHeads"]
-                                                    })
-            self.ws_collector.setDaemon(True)
-            self.ws_collector.start()
-            self.record_difficulty = True
-            self.record_max_priority_fee = True
+        self.url, self.chain_id, self.stripped_url = rpc_metadata['url'], rpc_metadata['chain_id'], strip_url(
+            rpc_metadata['url'])
+        self.labels, self.labels_values = generate_labels_from_metadata(rpc_metadata)
 
-        else:
-            logger.error("Please provide wss/ws endpoint for {}".format(strip_url(self.url)))
-            exit(1)
+        sub_payload = {"method": "eth_subscribe", "jsonrpc": "2.0", "id": self.chain_id, "params": ["newHeads"]}
+        self.sub = subscription(self.url, sub_payload)
+        self.sub.isDaemon()
+        self.sub.start()
 
-    def probe(self) -> results:
+    async def _web3_clientVersion(self, websocket):
+        payload = {"jsonrpc": "2.0", "method": "web3_clientVersion", "params": [], "id": self.chain_id}
+        await websocket.send(json.dumps(payload))
+        result = await websocket.recv()
+        return key_from_json_str(result, "result")
+
+    async def _eth_blockNumber(self, websocket):
+        payload = {"jsonrpc": "2.0", "method": "eth_blockNumber", "params": [], "id": self.chain_id}
+        await websocket.send(json.dumps(payload))
+        result = await websocket.recv()
+        return hex_to_int(key_from_json_str(result, "result"))
+
+    async def _probe(self) -> results:
+        """Registers itself against results class and populates various metrics for prometheus registry to yield."""
+        results.register(self.url, self.labels_values)
         try:
-            if self.client.isConnected():
-                results.register(self.url, self.labels_values)
+            async with websockets.connect(self.url,
+                                          open_timeout=cfg.open_timeout,
+                                          close_timeout=cfg.close_timeout,
+                                          ping_interval=cfg.ping_interval,
+                                          ping_timeout=cfg.ping_timeout) as websocket:
+                results.record_latency(self.url, await fetch_latency(websocket))
                 results.record_health(self.url, True)
-                results.record_head_count(self.url, self.ws_collector.message_counter)
-                results.record_disconnects(self.url, self.ws_collector.disconnects_counter)
-                results.record_latency(self.url, self.ws_collector.get_latency())
-                results.record_block_height(self.url, self.client.eth.block_number)
-                try:
-                    if self.record_difficulty:
-                        results.record_total_difficulty(self.url, self.client.eth.get_block('latest')['totalDifficulty'])
-                        results.record_difficulty(self.url, self.client.eth.get_block('latest')['difficulty'])
-                except (ExtraDataLengthError, KeyError):
-                    logger.info("It looks like this is a POA chain, and does not use difficulty anymore. Collector will ignore difficulty metric from this point on.")
-                    self.record_difficulty = False
-                try:
-                    if self.record_max_priority_fee:
-                        results.record_max_priority_fee(self.url, self.client.eth.max_priority_fee)
-                except ValueError:
-                    self.record_max_priority_fee = False
-                    logger.info("It look slike max_priority_fee method is not supported on this chain. Collector will ignore difficulty metric from this point on.")
-                results.record_gas_price(self.url, self.client.eth.gas_price)
-                results.record_client_version(self.url, self.client.clientVersion)
-            else:
-                logger.info("Client is not connected to {}".format(strip_url(self.url)))
-                results.record_health(self.url, False)
-        except asyncio.exceptions.TimeoutError as exc:
-            logger.info("Client timed out for {}: {}".format(strip_url(self.url), exc))
-            results.record_health(self.url, False)
-        except WebSocketException as exc:
-            logger.info("Websocket client exception {}: {}".format(strip_url(self.url), exc))
-            results.record_health(self.url, False)
+                results.record_block_height(self.url, await self._eth_blockNumber(websocket))
+                results.record_client_version(self.url, await self._web3_clientVersion(websocket))
+                results.record_head_count(self.url, self.sub.head_counter)
+                results.record_disconnects(self.url, self.sub.disconnects)
         except Exception as exc:
-            logger.error("Failed probing {} with error: {}".format(strip_url(self.url), exc))
             results.record_health(self.url, False)
+            logger.error(f"{exc}", url=self.stripped_url)
+
+    def probe(self):
+        asyncio.run(self._probe())

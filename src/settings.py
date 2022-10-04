@@ -2,13 +2,11 @@ import os
 from typing import Optional
 import yaml
 from schema import Schema, And, SchemaError, Optional
-import logging
+import structlog
 
-logger = logging.getLogger('exporter')
 LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
-
-logging.basicConfig(level=LOGLEVEL,
-                    format="{'thread': '%(threadName)s', 'level': '%(levelname)s', 'message': '%(message)s'}")
+structlog.configure(processors=[structlog.processors.add_log_level, structlog.processors.JSONRenderer()])
+logger = structlog.get_logger()
 
 
 class configuration():
@@ -159,5 +157,4 @@ class configuration():
 
 cfg_file_path = os.getenv('CONFIG_FILE_PATH', default='/config/config.yml')
 valid_file_path = os.getenv('VALIDATION_FILE_PATH', default='/config/validation.yml')
-
 cfg = configuration(cfg_file_path, valid_file_path)
