@@ -23,13 +23,13 @@ class conflux_collector():
     async def _cfx_clientVersion(self, websocket):
         payload = {"jsonrpc": "2.0", "method": "cfx_clientVersion", "params": [], "id": 1}
         await websocket.send(json.dumps(payload))
-        result = await websocket.recv()
+        result = await asyncio.wait_for(websocket.recv(), timeout=cfg.response_timeout)
         return key_from_json_str(result, "result")
 
     async def _cfx_epochNumber(self, websocket):
         payload = {"jsonrpc": "2.0", "method": "cfx_epochNumber", "params": [], "id": 1}
         await websocket.send(json.dumps(payload))
-        result = await websocket.recv()
+        result = await asyncio.wait_for(websocket.recv(), timeout=cfg.response_timeout)
         return hex_to_int(key_from_json_str(result, "result"))
 
     async def _probe(self) -> results:
@@ -50,7 +50,7 @@ class conflux_collector():
             logger.error(
                 f"Timed out while trying to establish websocket connection. Current open_timeout value in config: {cfg.open_timeout}.",
                 url=self.stripped_url)
-            results.record_health(self.url, False)        
+            results.record_health(self.url, False)
         except Exception as exc:
             results.record_health(self.url, False)
             logger.error(f"{exc}", url=self.stripped_url)

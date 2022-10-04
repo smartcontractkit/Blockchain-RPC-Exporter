@@ -2,6 +2,7 @@ import requests
 from settings import logger
 from helpers import strip_url
 from time import perf_counter
+from settings import cfg
 
 
 class https_connection():
@@ -11,7 +12,7 @@ class https_connection():
 
     def is_connected_post_check(self, payload):
         try:
-            response = requests.post(self.url, json=payload)
+            response = requests.post(self.url, json=payload, timeout=cfg.response_timeout)
             response.raise_for_status()
         except (IOError, requests.HTTPError) as exc:
             logger.error(exc, url=self.stripped_url)

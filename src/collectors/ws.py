@@ -48,5 +48,5 @@ class subscription(threading.Thread):
 async def fetch_latency(websocket):
     start = perf_counter()
     pong = await websocket.ping()
-    await pong
+    await asyncio.wait_for(pong, timeout=cfg.response_timeout)
     return (perf_counter() - start) * 1000

@@ -24,7 +24,7 @@ class cardano_collector():
             }
         }
         await websocket.send(json.dumps(payload))
-        result = await websocket.recv()
+        result = await asyncio.wait_for(websocket.recv(), timeout=cfg.response_timeout)
         return key_from_json_str(result, "result")
 
     async def _probe(self) -> results:
