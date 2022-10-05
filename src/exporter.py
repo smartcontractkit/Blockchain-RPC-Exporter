@@ -148,9 +148,13 @@ class prom_registry(object):
                 yield metric
         # The last step is to report exporter health
         # This metric will be used to monitor if exporter is alive and forwarding metrics to prometheus endpoints.
-        exporter_health_metric = GaugeMetricFamily('brpc_exporter_health','Returns 1 if exporter was able to finalise scraping loop without exceptions.', labels=['blockchain'])
+        exporter_health_metric = GaugeMetricFamily(
+            'brpc_exporter_health',
+            'Returns 1 if exporter was able to finalise scraping loop without exceptions.',
+            labels=['blockchain'])
         self._report_exporter_health(exporter_health_metric)
         yield exporter_health_metric
+
 
 def dummy_report(environ, start_fn):
     start_fn('200 OK', [])
