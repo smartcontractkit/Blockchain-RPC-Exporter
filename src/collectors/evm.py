@@ -48,7 +48,7 @@ class evm_collector():
                 results.record_disconnects(self.url, self.sub.disconnects)
         except asyncio.exceptions.TimeoutError:
             logger.error(
-                f"Timed out while trying to establish websocket connection. Current response_timeout value in config: {cfg.response_timeout}.",
+                f"Timed out while trying to establish websocket connection.",
                 url=self.stripped_url)
             results.record_health(self.url, False)
         except Exception as exc:

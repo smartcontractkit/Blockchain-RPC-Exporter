@@ -34,6 +34,7 @@ class subscription(threading.Thread):
             try:
                 # When we establish connection, we arm the first_time boolean, so we can record disconnect if it occurs.
                 self.first_disconnect = True
+                logger.info("Subscription connection established.", url=self.stripped_url)
                 await websocket.send(json.dumps(self.payload))
                 await self._message_counter(websocket)
             except websockets.exceptions.ConnectionClosed:

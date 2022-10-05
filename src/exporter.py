@@ -11,7 +11,7 @@ from collectors.filecoin import filecoin_collector
 from collectors.starkware import starkware_collector
 from settings import logger, cfg
 from metrics_processor import results
-from settings import logger
+from settings import logger, cfg
 
 
 class prom_registry(object):
@@ -84,6 +84,9 @@ class prom_registry(object):
             self.collectors.append(starkware_collector(item))
             self.labels = self.collectors[0].labels
 
+    def _report_exporter_health(self, health_metric):
+        health_metric.add_metric([cfg.blockchain], True)
+
     def collect(self):
         metrics = {
             "brpc_health":
@@ -143,7 +146,11 @@ class prom_registry(object):
             # Only yield metric if samples were provided by the probe
             if len(metric.samples) > 0:
                 yield metric
-
+        # The last step is to report exporter health
+        # This metric will be used to monitor if exporter is alive and forwarding metrics to prometheus endpoints.
+        exporter_health_metric = GaugeMetricFamily('brpc_exporter_health','Returns 1 if exporter was able to finalise scraping loop without exceptions.', labels=['blockchain'])
+        self._report_exporter_health(exporter_health_metric)
+        yield exporter_health_metric
 
 def dummy_report(environ, start_fn):
     start_fn('200 OK', [])
