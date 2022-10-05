@@ -16,6 +16,7 @@ class configuration():
         self.configuration = self._load_configuration_file(config_file_path)
         self._populate_endpoints_metadata()
         self._populate_chain_id_metadata()
+        self.blockchain = self.configuration['blockchain']
         self.endpoints = self.configuration['endpoints']
 
         try:
