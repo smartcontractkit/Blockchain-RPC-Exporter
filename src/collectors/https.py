@@ -2,8 +2,7 @@ import requests
 from settings import logger
 from helpers import strip_url
 from time import perf_counter
-from settings import cfg
-
+from configuration import cfg
 
 class https_connection():
 

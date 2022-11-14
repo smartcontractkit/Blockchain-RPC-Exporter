@@ -9,9 +9,9 @@ from collectors.conflux import conflux_collector
 from collectors.bitcoin import bitcoin_collector
 from collectors.filecoin import filecoin_collector
 from collectors.starkware import starkware_collector
-from settings import logger, cfg
+from settings import logger
+from configuration import cfg
 from metrics_processor import results
-from settings import logger, cfg
 
 
 class prom_registry(object):

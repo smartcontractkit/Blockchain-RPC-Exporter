@@ -4,7 +4,8 @@ import json
 from helpers import strip_url
 import threading
 from time import perf_counter
-from settings import logger, cfg
+from settings import logger
+from configuration import cfg
 
 
 class subscription(threading.Thread):
