@@ -10,7 +10,7 @@ from collectors.bitcoin import bitcoin_collector
 from collectors.filecoin import filecoin_collector
 from collectors.starkware import starkware_collector
 from settings import logger
-from configuration import cfg
+from cfg import cfg
 from metrics_processor import results
 
 

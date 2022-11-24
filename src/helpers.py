@@ -2,7 +2,6 @@ import urllib.parse
 from time import perf_counter
 import json
 
-
 def strip_url(url):
     """Returns a stripped url from all parameters, usernames or passwords if present.
     It is used to safely log errors without exposing keys and authentication parameters."""

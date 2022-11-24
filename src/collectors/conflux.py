@@ -1,5 +1,5 @@
 from settings import logger
-from configuration import cfg
+from cfg import cfg
 from helpers import strip_url, generate_labels_from_metadata, hex_to_int, key_from_json_str
 from metrics_processor import results
 

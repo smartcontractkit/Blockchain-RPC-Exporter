@@ -5,7 +5,7 @@ from helpers import strip_url
 import threading
 from time import perf_counter
 from settings import logger
-from configuration import cfg
+from cfg import cfg
 
 
 class subscription(threading.Thread):
