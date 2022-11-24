@@ -1,12 +1,10 @@
 import asyncio
 import websockets
 import json
-from helpers import strip_url
+from helpers import strip_url, cfg
 import threading
 from time import perf_counter
 from settings import logger
-from cfg import cfg
-
 
 class subscription(threading.Thread):
 

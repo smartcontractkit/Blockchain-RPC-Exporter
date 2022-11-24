@@ -1,7 +1,16 @@
-import urllib.parse
-from time import perf_counter
-import json
 
+import os
+import urllib.parse
+import json
+from settings import configuration
+
+# Configuration
+cfg_file_path = os.getenv('CONFIG_FILE_PATH', default='/config/config.yml')
+valid_file_path = os.getenv('VALIDATION_FILE_PATH', default='/config/validation.yml')
+cfg = configuration(cfg_file_path, valid_file_path)
+
+
+# Random functions
 def strip_url(url):
     """Returns a stripped url from all parameters, usernames or passwords if present.
     It is used to safely log errors without exposing keys and authentication parameters."""

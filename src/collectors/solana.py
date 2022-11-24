@@ -2,7 +2,6 @@ from settings import logger
 from helpers import strip_url, generate_labels_from_metadata
 import requests
 from metrics_processor import results
-from time import perf_counter
 from collectors.ws import subscription
 from collectors.https import https_connection
 

@@ -1,6 +1,5 @@
 from helpers import strip_url, generate_labels_from_metadata
 from settings import logger
-from time import perf_counter
 import requests
 from metrics_processor import results
 from collectors.https import https_connection
