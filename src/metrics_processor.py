@@ -110,7 +110,7 @@ class ProbeResults(object):
                         value={"client_version": self.metadata[url]['brpc_client_version']})
             self.metadata.clear()
         except Exception as e:
-            print(e, type(e))
+            print("An exception occurred while recording metrics to registry.")
         self.metadata.clear()
 
 
