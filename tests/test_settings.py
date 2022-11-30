@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, call, patch, mock_open
 from unittest import mock
-from src.settings import configuration
+from src.settings import configuration, logger
 
 
 class test_configuration(unittest.TestCase):

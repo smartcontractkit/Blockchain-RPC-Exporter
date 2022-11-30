@@ -1,5 +1,5 @@
-from settings import logger
-from helpers import strip_url, generate_labels_from_metadata, hex_to_int, key_from_json_str, cfg
+from src.settings import logger
+from src.helpers import strip_url, generate_labels_from_metadata, hex_to_int, key_from_json_str, cfg
 from metrics_processor import results
 from collectors.ws import subscription, fetch_latency
 import json

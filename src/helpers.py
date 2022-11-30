@@ -2,7 +2,7 @@
 import os
 import urllib.parse
 import json
-from settings import configuration
+from src.settings import configuration
 
 # Configuration
 cfg_file_path = os.getenv('CONFIG_FILE_PATH', default='/config/config.yml')
