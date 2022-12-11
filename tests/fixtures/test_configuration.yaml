@@ -1,0 +1,12 @@
+blockchain: "Ethereum"
+chain_id: 1
+network_name: "Mainnet"
+network_type: "Mainnet"
+collector: "evm"
+endpoints:
+  - url: wss://test1.com
+    provider: TestProvider1
+  - url: wss://test2.com
+    provider: TestProvider2
+  - url: wss://test3.com
+    provider: TestProvider3
