@@ -90,25 +90,20 @@ class HttpsInterface():
         return response
 
 
-class WebsocketInterface(threading.Thread):  #pylint: disable=too-many-instance-attributes
-    """A websocket interface, to interact with websocket RPC endpoints."""
-
+class WebsocketSubscription(threading.Thread):
     def __init__(self, url, sub_payload=None, **client_parameters):
         threading.Thread.__init__(self)
         self._url = url
         self._sub_payload = sub_payload
         self._client_parameters = client_parameters
-        self._logger = logger
-        self._logger_metadata = {
-            'component': 'WebsocketCollector',
-            'url': strip_url(url)
-        }
 
         self.healthy = False
         self.disconnects = 0
         self.heads_received = 0
         self._latest_message = None
-        self.cache = Cache()
+
+    def run(self):
+        asyncio.run(self._subscribe(self._sub_payload))
 
     def get_message_property(self, property_name):
         """Every time new websocket message is received it is stored in-memory.
@@ -147,28 +142,6 @@ class WebsocketInterface(threading.Thread):  #pylint: disable=too-many-instance-
         else:
             return None
 
-    def run(self):
-        asyncio.run(self._subscribe(self._sub_payload))
-
-    def query(self, payload, skip_checks=False):
-        """Asyncio handler for _query method."""
-        return asyncio.run(self._query(payload, skip_checks))
-
-    def cached_query(self, payload, skip_checks=False):
-        """Calls json_rpc_post and stores the result in in-memory
-        cache, by using payload as key.Method will always return
-        cached value after the first call. Cache never expires."""
-
-        cache_key = str(payload)
-        value = None
-        if self.cache.is_cached(cache_key):
-            value = self.cache.retrieve_key_value(cache_key)
-        else:
-            value = asyncio.run(self._query(payload, skip_checks))
-            if value is not None:
-                self.cache.store_key_value(cache_key, value)
-        return value
-
     async def _process_message(self, websocket):
         async for msg in websocket:
             self.healthy = True
@@ -204,6 +177,40 @@ class WebsocketInterface(threading.Thread):  #pylint: disable=too-many-instance-
                     self.disconnects += 1
                 self.healthy = False
                 continue
+
+class WebsocketInterface(WebsocketSubscription):  #pylint: disable=too-many-instance-attributes
+    """A websocket interface, to interact with websocket RPC endpoints."""
+
+    def __init__(self, url, sub_payload=None, **client_parameters):
+        super().__init__(url, sub_payload, **client_parameters)
+        self._url = url
+        self._client_parameters = client_parameters
+        self._logger = logger
+        self._logger_metadata = {
+            'component': 'WebsocketInterface',
+            'url': strip_url(url)
+        }
+        self.cache = Cache()
+
+    def query(self, payload, skip_checks=False):
+        """Asyncio handler for _query method."""
+        return asyncio.run(self._query(payload, skip_checks))
+
+    def cached_query(self, payload, skip_checks=False):
+        """Calls json_rpc_post and stores the result in in-memory
+        cache, by using payload as key.Method will always return
+        cached value after the first call. Cache never expires."""
+
+        cache_key = str(payload)
+        value = None
+        if self.cache.is_cached(cache_key):
+            value = self.cache.retrieve_key_value(cache_key)
+        else:
+            value = asyncio.run(self._query(payload, skip_checks))
+            if value is not None:
+                self.cache.store_key_value(cache_key, value)
+        return value
+
 
     async def _query(self, payload, skip_checks):
         async with connect(self._url, **self._client_parameters) as websocket:
