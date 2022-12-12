@@ -1,19 +1,20 @@
- #pylint: disable=protected-access, import-error
-"""Test module for Cache"""
-import unittest
-from src.cache import Cache
+"""Test module for cache"""
+#pylint: disable=protected-access
+from unittest import TestCase
+from cache import Cache
 
 
-class TestCache(unittest.TestCase):
+class TestCache(TestCase):
     """Tests all cache functionalities"""
 
     def setUp(self):
         """Loads cache."""
-        self.cache = Cache() #
+        self.cache = Cache()  #
 
     def test_cache_type_attribute(self):
         """Check if cache is empty after instantiation."""
-        self.assertTrue(self.cache._cache == {})
+        # Dict returns True if empty.
+        self.assertTrue(not self.cache._cache)
 
     def test_store_key_value(self):
         """Check if storing a value in cache works."""

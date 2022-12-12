@@ -1,0 +1,4 @@
+allowed_providers:
+  - TestProvider1
+  - TestProvider2
+  - TestProvider3
