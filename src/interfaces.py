@@ -174,7 +174,7 @@ class WebsocketInterface(threading.Thread):  #pylint: disable=too-many-instance-
             self.healthy = True
             if msg is not None:
                 try:
-                    if 'params' in json.loads(msg).keys():
+                    if 'params' in json.loads(msg):
                         msg = json.loads(msg)['params']['result']
                         self._latest_message = msg
                 except json.decoder.JSONDecodeError as error:
