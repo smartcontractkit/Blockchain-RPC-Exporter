@@ -11,7 +11,6 @@ class Cache():
         """Check if key is cached."""
         if key in self._cache:
             return True
-        print(self._cache, key, "not found in cache")
         return False
 
     def store_key_value(self, key: str, value):

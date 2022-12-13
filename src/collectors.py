@@ -192,7 +192,8 @@ class FilecoinCollector(HttpsInterface):
         }
         self.block_height_payload = {
             'jsonrpc': '2.0',
-            'method': "Filecoin.ChainHead",
+            'method': "
+            .ChainHead",
             'id': 1
         }
 
