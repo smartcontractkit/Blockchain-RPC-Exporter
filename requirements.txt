@@ -5,3 +5,4 @@ schema==0.7.5
 websockets==10.4
 structlog==22.1.0
 requests==2.28.1
+jsonrpcclient==4.0.2
