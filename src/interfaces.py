@@ -15,6 +15,23 @@ from cache import Cache
 from log import logger
 
 
+def return_and_validate_rpc_json(message: str, logger_metadata) -> dict:
+    """Loads json rpc response text and validates the response
+    as per JSON-RPC 2.0 Specification. In case the message is
+    not valid it returns None."""
+    try:
+        message = parse_json(message)
+        if isinstance(message, Ok):
+            return message.result
+    except requests.exceptions.JSONDecodeError as error:
+        logger.error('Invalid JSON object in RPC message.',
+                     base64_encoded_message=base64.b64encode(message),
+                     error=error,
+                     **logger_metadata)
+    logger.error('Error in RPC message.', message=message, **logger_metadata)
+    return None
+
+
 class HttpsInterface():
     """A https interface, to interact with https RPC endpoints."""
 
@@ -47,25 +64,6 @@ class HttpsInterface():
             self.cache.store_key_value(cache_key, value)
         return value
 
-    def _return_and_validate_rpc_json(self, message: str) -> dict:
-        """Loads json rpc response text and validates the response
-        as per JSON-RPC 2.0 Specification. In case the message is
-        not valid it returns None."""
-        try:
-            message = parse_json(message)
-            if isinstance(message, Ok):
-                return message.result
-        except requests.exceptions.JSONDecodeError as error:
-            self._logger.error(
-                'Invalid JSON object in RPC message.',
-                base64_encoded_message=base64.b64encode(message),
-                error=error,
-                **self._logger_metadata)
-        self._logger.error('Error in RPC message.',
-                           message=message,
-                           **self._logger_metadata)
-        return None
-
     def _return_and_validate_post_request(self, payload: dict) -> str:
         """Sends a POST request and validates the response code. If
         response code is OK, it returns the response.text, otherwise
@@ -96,15 +94,17 @@ class HttpsInterface():
         fail, the method returns type None. """
         response = self._return_and_validate_post_request(payload)
         if response is not None:
-            result = self._return_and_validate_rpc_json(response)
+            result = return_and_validate_rpc_json(response,
+                                                  self._logger_metadata)
             if result is not None:
                 return result
         return response
 
 
-class WebsocketSubscription(threading.Thread): #pylint: disable=too-many-instance-attributes
+class WebsocketSubscription(threading.Thread):  #pylint: disable=too-many-instance-attributes
     """A thread class used to subscribe and track
     websocket parameters."""
+
     def __init__(self, url, sub_payload=None, **client_parameters):
         threading.Thread.__init__(self)
         self._url = url
@@ -232,6 +232,17 @@ class WebsocketInterface(WebsocketSubscription):  #pylint: disable=too-many-inst
                 self.cache.store_key_value(cache_key, value)
         return value
 
+    def _load_and_validate_json_key(self, message, key):
+        try:
+            return json.loads(message)[key]
+        except (KeyError, json.decoder.JSONDecodeError) as exc:
+            self._logger.error("Failed to load key from json.",
+                               error=exc,
+                               message=message,
+                               key=key,
+                               **self._logger_metadata)
+            return None
+
     async def _query(self, payload, skip_checks):
         async with connect(self._url, **self._client_parameters) as websocket:
             try:
@@ -253,27 +264,6 @@ class WebsocketInterface(WebsocketSubscription):  #pylint: disable=too-many-inst
                 return None
 
             if skip_checks:
-                try:
-                    return json.loads(result)['result']
-                except (KeyError, json.decoder.JSONDecodeError) as exc:
-                    self._logger.error("Failed to decode RPC query response.",
-                                       payload=payload,
-                                       error=exc,
-                                       response=result,
-                                       **self._logger_metadata)
-                    return None
-            else:
-                try:
-                    response = parse_json(result)
-                    if isinstance(response, Ok):
-                        return response.result
-                    self._logger.error('Error in RPC response.',
-                                       payload=payload,
-                                       response=result,
-                                       **self._logger_metadata)
-                    return None
-                except requests.exceptions.JSONDecodeError:
-                    self._logger.error('Invalid JSON object.',
-                                       payload=payload,
-                                       **self._logger_metadata)
-                    return None
+                return self._load_and_validate_json_key(result, 'result')
+
+            return return_and_validate_rpc_json(result, self._logger_metadata)
