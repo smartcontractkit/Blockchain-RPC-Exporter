@@ -156,13 +156,11 @@ class BitcoinCollector(HttpsInterface):
 
     @property
     def total_difficulty(self):
-        try:
-            """Gets total difficulty from a previous call and clears the cache."""
-            total_difficulty = self.cached_json_rpc_post(
-                self.blockchain_info_payload, invalidate_cache=True)['difficulty']
-            return total_difficulty
-        except Exception as e:
-            print(e, type(e))
+        """Gets total difficulty from a previous call and clears the cache."""
+        total_difficulty = self.cached_json_rpc_post(
+            self.blockchain_info_payload, invalidate_cache=True)['difficulty']
+        return total_difficulty
+
 
     @property
     def client_version(self):
