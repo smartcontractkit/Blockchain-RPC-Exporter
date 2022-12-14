@@ -15,10 +15,11 @@ from cache import Cache
 from log import logger
 
 
-def return_and_validate_rpc_json(message: str, logger_metadata) -> dict:
+def return_and_validate_rpc_json_result(message: str, logger_metadata) -> dict:
     """Loads json rpc response text and validates the response
     as per JSON-RPC 2.0 Specification. In case the message is
-    not valid it returns None."""
+    not valid it returns None. This method is shared both by HTTPS and 
+    Websocket Interfaces."""
     try:
         message = parse_json(message)
         if isinstance(message, Ok):
@@ -94,7 +95,7 @@ class HttpsInterface():
         fail, the method returns type None. """
         response = self._return_and_validate_post_request(payload)
         if response is not None:
-            result = return_and_validate_rpc_json(response,
+            result = return_and_validate_rpc_json_result(response,
                                                   self._logger_metadata)
             if result is not None:
                 return result
@@ -266,4 +267,4 @@ class WebsocketInterface(WebsocketSubscription):  #pylint: disable=too-many-inst
             if skip_checks:
                 return self._load_and_validate_json_key(result, 'result')
 
-            return return_and_validate_rpc_json(result, self._logger_metadata)
+            return return_and_validate_rpc_json_result(result, self._logger_metadata)
