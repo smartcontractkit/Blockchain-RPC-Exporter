@@ -213,8 +213,7 @@ class FilecoinCollector(HttpsInterface):
     def client_version(self):
         """Runs a cached query to return client version."""
         version = str(
-            self.cached_json_rpc_post(self.client_version_payload)['Version'])
-        self.cache.remove_key_from_cache(self.client_version_payload)
+            self.cached_json_rpc_post(self.client_version_payload, invalidate_cache=True)['Version'])
         return version
 
 
@@ -263,8 +262,7 @@ class SolanaCollector(HttpsInterface):
         """Runs a cached query to return client version."""
         version = str(
             self.cached_json_rpc_post(
-                self.client_version_payload)['solana-core'])
-        self.cache.remove_key_from_cache(self.client_version_payload)
+                self.client_version_payload, invalidate_cache=True)['solana-core'])
         return version
 
 
@@ -300,6 +298,5 @@ class StarkwareCollector(HttpsInterface):
         """Returns latest block height. Cache is cleared when total_difficulty is fetched.
         In order for this collector to work, alive and block_height calls need to be
         followed with total_difficulty and client_version calls so the cache is cleared."""
-        block_height = self.cached_json_rpc_post(self.block_height_payload)
-        self.cache.remove_key_from_cache(self.block_height_payload)
+        block_height = self.cached_json_rpc_post(self.block_height_payload, invalidate_cache=True)
         return block_height
