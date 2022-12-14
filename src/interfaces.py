@@ -226,10 +226,10 @@ class WebsocketInterface(WebsocketSubscription):  #pylint: disable=too-many-inst
             if invalidate_cache:
                 self.cache.remove_key_from_cache(cache_key)
             return value
-        else:
-            value = asyncio.run(self._query(payload, skip_checks))
-            if value is not None:
-                self.cache.store_key_value(cache_key, value)
+
+        value = asyncio.run(self._query(payload, skip_checks))
+        if value is not None:
+            self.cache.store_key_value(cache_key, value)
         return value
 
     def _load_and_validate_json_key(self, message, key):
