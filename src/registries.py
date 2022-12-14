@@ -7,14 +7,8 @@ class Endpoint():  #pylint: disable=too-few-public-methods
     """RPC Endpoint class, to store metadata."""
 
     def __init__(  #pylint: disable=too-many-arguments
-            self,
-            url,
-            provider,
-            blockchain,
-            network_name,
-            network_type,
-            chain_id,
-            **client_parameters):
+            self, url, provider, blockchain, network_name, network_type,
+            chain_id, **client_parameters):
         self.url = url
         self.chain_id = chain_id
         self.labels = [

@@ -1,5 +1,4 @@
 #pylint: disable=protected-access,invalid-name
-
 """Module for testing Config"""
 
 import os

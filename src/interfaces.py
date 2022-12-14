@@ -45,14 +45,32 @@ class HttpsInterface():
         value = self.json_rpc_post(payload)
         if value is not None:
             self.cache.store_key_value(cache_key, value)
-
         return value
 
-    def json_rpc_post(self, payload):
-        """Sends a post request. It validates http response code, and
-        the validity of json-rpc response. If any of the validations
-        fail, the method returns type None. """
-        response = None
+    def _return_and_validate_rpc_json(self, message: str) -> dict:
+        """Loads json rpc response text and validates the response
+        as per JSON-RPC 2.0 Specification. In case the message is
+        not valid it returns None."""
+        try:
+            message = parse_json(message)
+            if isinstance(message, Ok):
+                return message.result
+        except requests.exceptions.JSONDecodeError as error:
+            self._logger.error(
+                'Invalid JSON object in RPC message.',
+                base64_encoded_message=base64.b64encode(message),
+                error=error,
+                **self._logger_metadata)
+        self._logger.error('Error in RPC message.',
+                           message=message,
+                           **self._logger_metadata)
+        return None
+
+    def _return_and_validate_post_request(self, payload: dict) -> str:
+        """Sends a POST request and validates the response code. If
+        response code is OK, it returns the response.text, otherwise
+        it returns None.
+        """
         with self.session as ses:
             try:
                 self._logger.debug("Querying endpoint.",
@@ -63,43 +81,41 @@ class HttpsInterface():
                                timeout=Timeout(connect=self.connect_timeout,
                                                read=self.response_timeout))
                 if req.status_code == requests.codes.ok:  #pylint: disable=no-member
-                    try:
-                        r_j = parse_json(req.text)
-                        if isinstance(r_j, Ok):
-                            response = r_j.result
-                        else:
-                            self._logger.error('RPC Response error.',
-                                               payload=payload,
-                                               response=req.text,
-                                               **self._logger_metadata)
-                    except requests.exceptions.JSONDecodeError as error:
-                        self._logger.error(
-                            'Invalid JSON object.',
-                            payload=payload,
-                            base64_encoded_response=base64.b64encode(req.text),
-                            error=error,
-                            **self._logger_metadata)
-                else:
-                    self._logger.error('Bad HTTP response.',
-                                       payload=payload,
-                                       response_code=req.status_code,
-                                       **self._logger_metadata)
+                    return req.text
             except (IOError, requests.HTTPError) as error:
                 self._logger.error("Problem while sending post request.",
                                    payload=payload,
                                    error=error,
                                    **self._logger_metadata)
+                return None
+            return None
 
+    def json_rpc_post(self, payload):
+        """Sends a post request. It validates http response code, and
+        the validity of json-rpc response. If any of the validations
+        fail, the method returns type None. """
+        response = self._return_and_validate_post_request(payload)
+        if response is not None:
+            result = self._return_and_validate_rpc_json(response)
+            if result is not None:
+                return result
         return response
 
 
-class WebsocketSubscription(threading.Thread):
+class WebsocketSubscription(threading.Thread): #pylint: disable=too-many-instance-attributes
+    """A thread class used to subscribe and track
+    websocket parameters."""
     def __init__(self, url, sub_payload=None, **client_parameters):
         threading.Thread.__init__(self)
         self._url = url
         self._sub_payload = sub_payload
         self._client_parameters = client_parameters
 
+        self._logger = logger
+        self._logger_metadata = {
+            'component': 'WebsocketSubscription',
+            'url': strip_url(url)
+        }
         self.healthy = False
         self.disconnects = 0
         self.heads_received = 0
@@ -181,6 +197,7 @@ class WebsocketSubscription(threading.Thread):
                 self.healthy = False
                 continue
 
+
 class WebsocketInterface(WebsocketSubscription):  #pylint: disable=too-many-instance-attributes
     """A websocket interface, to interact with websocket RPC endpoints."""
 
@@ -213,7 +230,6 @@ class WebsocketInterface(WebsocketSubscription):  #pylint: disable=too-many-inst
             if value is not None:
                 self.cache.store_key_value(cache_key, value)
         return value
-
 
     async def _query(self, payload, skip_checks):
         async with connect(self._url, **self._client_parameters) as websocket:
