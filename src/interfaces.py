@@ -18,8 +18,8 @@ from log import logger
 def return_and_validate_rpc_json_result(message: str, logger_metadata) -> dict:
     """Loads json rpc response text and validates the response
     as per JSON-RPC 2.0 Specification. In case the message is
-    not valid it returns None. This method is shared both by HTTPS and 
-    Websocket Interfaces."""
+    not valid it returns None. This method is used by both HTTPS and 
+    Websocket Interface."""
     try:
         message = parse_json(message)
         if isinstance(message, Ok):
