@@ -77,8 +77,9 @@ class PrometheusCustomCollector():  #pylint: disable=too-few-public-methods
         total_difficulty_metric = self._metrics_loader.total_difficulty_metric
 
         def _write_metrics(collector):
-            health_metric.add_metric(collector.labels, collector.alive)
-            if collector.alive:
+            alive = collector.alive
+            health_metric.add_metric(collector.labels, alive)
+            if alive:
                 if collector.disconnects is not None:
                     disconnects_metric.add_metric(collector.labels,
                                                   collector.disconnects)
@@ -106,3 +107,4 @@ class PrometheusCustomCollector():  #pylint: disable=too-few-public-methods
         yield disconnects_metric
         yield block_height_metric
         yield client_version_metric
+        yield total_difficulty_metric

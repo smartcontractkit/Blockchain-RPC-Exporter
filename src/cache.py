@@ -23,7 +23,7 @@ class Cache():
             return self._cache.get(key)
         return None
 
-    def remove_key_from_cache(self, key):
+    def remove_key_from_cache(self, key: str):
         """Deletes a key from cache."""
         if self.is_cached(key):
             del self._cache[key]

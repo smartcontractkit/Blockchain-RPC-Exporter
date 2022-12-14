@@ -30,14 +30,17 @@ class HttpsInterface():
         }
         self.cache = Cache()
 
-    def cached_json_rpc_post(self, payload):
+    def cached_json_rpc_post(self, payload: dict, invalidate_cache=False):
         """Calls json_rpc_post and stores the result in in-memory
         cache, by using payload as key.Method will always return
         cached value after the first call. Cache never expires."""
         cache_key = str(payload)
-        value = None
+
         if self.cache.is_cached(cache_key):
-            return self.cache.retrieve_key_value(cache_key)
+            return_value = self.cache.retrieve_key_value(cache_key)
+            if invalidate_cache:
+                self.cache.remove_key_from_cache(cache_key)
+            return return_value
 
         value = self.json_rpc_post(payload)
         if value is not None:

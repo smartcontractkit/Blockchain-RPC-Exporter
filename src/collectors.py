@@ -156,20 +156,20 @@ class BitcoinCollector(HttpsInterface):
 
     @property
     def total_difficulty(self):
-        """Gets total difficulty from a previous call and clears the cache."""
-        total_difficulty = self.cached_json_rpc_post(
-            self.blockchain_info_payload)['difficulty']
-        self.cache.remove_key_from_cache(self.blockchain_info_payload)
-        return total_difficulty
+        try:
+            """Gets total difficulty from a previous call and clears the cache."""
+            total_difficulty = self.cached_json_rpc_post(
+                self.blockchain_info_payload, invalidate_cache=True)['difficulty']
+            return total_difficulty
+        except Exception as e:
+            print(e, type(e))
 
     @property
     def client_version(self):
         """Runs a cached query to return client version."""
         version = str(
-            self.cached_json_rpc_post(self.network_info_payload)['version'])
-        self.cache.remove_key_from_cache(self.network_info_payload)
+            self.cached_json_rpc_post(self.network_info_payload, invalidate_cache=True)['version'])
         return version
-
 
 class FilecoinCollector(HttpsInterface):
     """A collector to fetch information about conflux RPC endpoints."""
