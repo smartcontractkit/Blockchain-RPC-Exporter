@@ -216,15 +216,16 @@ class WebsocketInterface(WebsocketSubscription):  #pylint: disable=too-many-inst
         """Asyncio handler for _query method."""
         return asyncio.run(self._query(payload, skip_checks))
 
-    def cached_query(self, payload, skip_checks=False):
+    def cached_query(self, payload, skip_checks=False, invalidate_cache=False):
         """Calls json_rpc_post and stores the result in in-memory
         cache, by using payload as key.Method will always return
         cached value after the first call. Cache never expires."""
-
         cache_key = str(payload)
-        value = None
         if self.cache.is_cached(cache_key):
             value = self.cache.retrieve_key_value(cache_key)
+            if invalidate_cache:
+                self.cache.remove_key_from_cache(cache_key)
+            return value
         else:
             value = asyncio.run(self._query(payload, skip_checks))
             if value is not None:
