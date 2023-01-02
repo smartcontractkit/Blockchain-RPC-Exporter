@@ -1,10 +1,10 @@
 """Test module for helpers"""
 #pylint: disable=protected-access
 from unittest import TestCase
-from helpers import strip_url
+from helpers import strip_url, return_and_validate_rpc_json_result
 
 
-class TestCache(TestCase):
+class TestHelpers(TestCase):
     """Tests all helper functions"""
 
     def test_strip_url_wss(self):

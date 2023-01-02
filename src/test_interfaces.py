@@ -2,8 +2,12 @@
 """Module for testing interfaces"""
 
 from unittest import TestCase
+import requests
 import requests_mock
+
 from interfaces import HttpsInterface
+from cache import Cache
+from log import logger
 
 
 class TestConfiguration(TestCase):
@@ -12,30 +16,55 @@ class TestConfiguration(TestCase):
     def setUp(self):
         """Set up dummy interface for us."""
         self.maxDiff = None
-        self.url = "mock://test.com"
+        self.url = "https://test.com/?apikey=123456"
         self.interface = HttpsInterface(self.url, 1, 2)
 
-    @requests_mock.Mocker()
-    def test(self, m):
-        """Tests something"""
-        response_text = '{"result":{"chain":"main","blocks":767217,"headers":767217,"bestblockhash":"000000000000000000003a0f6d9ef90eddb69bf8790f2b36175f271623d5ef13","difficulty":34244331613176.18,"time":1670937930,"mediantime":1670935650,"verificationprogress":0.9999995228987372,"initialblockdownload":false,"chainwork":"00000000000000000000000000000000000000003b7286459d348b523901a694","size_on_disk":503489280915,"pruned":false,"warnings":""},"error":null,"id":"exporter"}'
-        m.post(self.url, text=response_text)
+    def test_url_attribute(self):
+        self.assertEqual(self.url, self.interface.url)
 
-        final_result = {
-            'chain': 'main',
-            'blocks': 767217,
-            'headers': 767217,
-            'bestblockhash':
-            '000000000000000000003a0f6d9ef90eddb69bf8790f2b36175f271623d5ef13',
-            'difficulty': 34244331613176.18,
-            'time': 1670937930,
-            'mediantime': 1670935650,
-            'verificationprogress': 0.9999995228987372,
-            'initialblockdownload': False,
-            'chainwork':
-            '00000000000000000000000000000000000000003b7286459d348b523901a694',
-            'size_on_disk': 503489280915,
-            'pruned': False,
-            'warnings': ''
-        }
-        self.assertEqual(self.interface.json_rpc_post('demo'), final_result)
+    def test_connect_timeout_attribute(self):
+        self.assertEqual(1, self.interface.connect_timeout)
+
+    def test_response_timeout_attribute(self):
+        self.assertEqual(2, self.interface.response_timeout)
+
+    def test_session_attribute(self):
+        self.assertEqual(type(self.interface.session), requests.Session)
+
+    def test_logger_attribute(self):
+        self.assertEqual(self.interface._logger, logger)
+
+    def test_logger_metadata(self):
+        """Validate metadata. Makes sure url is stripped by helpers.strip_url
+        function."""
+        expected_metadata = {'component': 'HttpsCollector', 'url': 'test.com'}
+        self.assertEqual(self.interface._logger_metadata, expected_metadata)
+
+    def test_cache_attribute(self):
+        self.assertEqual(type(self.interface.cache), Cache)
+
+    def test_return_and_validate_post_request_method_200(self):
+        with requests_mock.Mocker(session=self.interface.session) as m:
+            m.post(self.url, text="Ok", status_code=200)
+            payload = {
+                "jsonrpc": "1.0",
+                "id": "exporter",
+                "method": "getnetworkinfo"
+            }
+            result = self.interface._return_and_validate_post_request(payload)
+            self.assertEqual(result, "Ok")
+            self.assertEqual(m.called, True)
+            self.assertEqual(m.call_count, 1)
+
+    def test_return_and_validate_post_request_method_non_200(self):
+        with requests_mock.Mocker(session=self.interface.session) as m:
+            m.post(self.url, text="Ok", status_code=500)
+            payload = {
+                "jsonrpc": "1.0",
+                "id": "exporter",
+                "method": "getnetworkinfo"
+            }
+            result = self.interface._return_and_validate_post_request(payload)
+            self.assertEqual(result, None)
+            self.assertEqual(m.called, True)
+            self.assertEqual(m.call_count, 1)

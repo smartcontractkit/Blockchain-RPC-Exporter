@@ -4,33 +4,14 @@ import json
 import threading
 import base64
 
-from jsonrpcclient import Ok, parse_json
 from websockets.client import connect
 from websockets.exceptions import ConnectionClosed, WebSocketException
 import requests
 from urllib3 import Timeout
 
-from helpers import strip_url
+from helpers import strip_url, return_and_validate_rpc_json_result
 from cache import Cache
 from log import logger
-
-
-def return_and_validate_rpc_json_result(message: str, logger_metadata) -> dict:
-    """Loads json rpc response text and validates the response
-    as per JSON-RPC 2.0 Specification. In case the message is
-    not valid it returns None. This method is used by both HTTPS and 
-    Websocket Interface."""
-    try:
-        message = parse_json(message)
-        if isinstance(message, Ok):
-            return message.result
-    except requests.exceptions.JSONDecodeError as error:
-        logger.error('Invalid JSON object in RPC message.',
-                     base64_encoded_message=base64.b64encode(message),
-                     error=error,
-                     **logger_metadata)
-    logger.error('Error in RPC message.', message=message, **logger_metadata)
-    return None
 
 
 class HttpsInterface():
@@ -48,6 +29,42 @@ class HttpsInterface():
         }
         self.cache = Cache()
 
+    def _return_and_validate_post_request(self, payload: dict) -> str:
+        """Sends a POST request and validates the http response code. If
+        response code is OK, it returns the response.text, otherwise
+        it returns None.
+        """
+        with self.session as ses:
+            try:
+                self._logger.debug("Querying endpoint.",
+                                   payload=payload,
+                                   **self._logger_metadata)
+                req = ses.post(self.url,
+                               json=payload,
+                               timeout=Timeout(connect=self.connect_timeout,
+                                               read=self.response_timeout))
+                if req.status_code == requests.codes.ok:  #pylint: disable=no-member
+                    return req.text
+            except (IOError, requests.HTTPError,
+                    json.decoder.JSONDecodeError) as error:
+                self._logger.error("Problem while sending a post request.",
+                                   payload=payload,
+                                   error=error,
+                                   **self._logger_metadata)
+                return None
+            return None
+
+    def json_rpc_post(self, payload):
+        """Checks the validity of a successful json-rpc response. If any of the 
+        validations fail, the method returns type None. """
+        response = self._return_and_validate_post_request(payload)
+        if response is not None:
+            result = return_and_validate_rpc_json_result(
+                response, self._logger_metadata)
+            if result is not None:
+                return result
+        return response
+
     def cached_json_rpc_post(self, payload: dict, invalidate_cache=False):
         """Calls json_rpc_post and stores the result in in-memory
         cache, by using payload as key.Method will always return
@@ -64,42 +81,6 @@ class HttpsInterface():
         if value is not None:
             self.cache.store_key_value(cache_key, value)
         return value
-
-    def _return_and_validate_post_request(self, payload: dict) -> str:
-        """Sends a POST request and validates the response code. If
-        response code is OK, it returns the response.text, otherwise
-        it returns None.
-        """
-        with self.session as ses:
-            try:
-                self._logger.debug("Querying endpoint.",
-                                   payload=payload,
-                                   **self._logger_metadata)
-                req = ses.post(self.url,
-                               json=payload,
-                               timeout=Timeout(connect=self.connect_timeout,
-                                               read=self.response_timeout))
-                if req.status_code == requests.codes.ok:  #pylint: disable=no-member
-                    return req.text
-            except (IOError, requests.HTTPError) as error:
-                self._logger.error("Problem while sending post request.",
-                                   payload=payload,
-                                   error=error,
-                                   **self._logger_metadata)
-                return None
-            return None
-
-    def json_rpc_post(self, payload):
-        """Sends a post request. It validates http response code, and
-        the validity of json-rpc response. If any of the validations
-        fail, the method returns type None. """
-        response = self._return_and_validate_post_request(payload)
-        if response is not None:
-            result = return_and_validate_rpc_json_result(response,
-                                                  self._logger_metadata)
-            if result is not None:
-                return result
-        return response
 
 
 class WebsocketSubscription(threading.Thread):  #pylint: disable=too-many-instance-attributes
@@ -267,4 +248,5 @@ class WebsocketInterface(WebsocketSubscription):  #pylint: disable=too-many-inst
             if skip_checks:
                 return self._load_and_validate_json_key(result, 'result')
 
-            return return_and_validate_rpc_json_result(result, self._logger_metadata)
+            return return_and_validate_rpc_json_result(result,
+                                                       self._logger_metadata)
