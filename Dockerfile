@@ -1,16 +1,18 @@
-FROM python:3.9.10 AS build
-COPY requirements.txt .
-RUN pip install -r ./requirements.txt
 
-FROM gcr.io/distroless/python3:nonroot
+FROM python:3.10-slim@sha256:ff4f0ce0074b0876f6d39ddfc32910557561ff061d13dc538879658c589bf936 AS build
 
-COPY --from=build /usr/local/lib/python3.9/site-packages/ \
- /usr/lib/python3.9/.
+WORKDIR /app
+# Copy repository files
+COPY setup.py .
+COPY src/*.py src/
+COPY src/tests src/tests
 
-ENV LC_ALL C.UTF-8
-WORKDIR /usr/src/app
-COPY src/*.py .
-COPY src/collectors/* collectors/
-# https://github.com/GoogleContainerTools/distroless/blob/main/experimental/python3/BUILD#L77
-USER nonroot
-CMD ["exporter.py"]
+RUN pip install -e ".[test]"
+# Execute tests
+WORKDIR src/
+RUN pytest
+
+RUN rm -f /src/tests
+RUN rm -f test_*
+
+CMD ["brpc"]

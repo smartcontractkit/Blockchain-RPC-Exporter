@@ -26,8 +26,12 @@ def exporter(environ, start_fn):  #pylint: disable=inconsistent-return-statement
         return return200(environ, start_fn)
 
 
-if __name__ == '__main__':
+def main():
     REGISTRY.register(PrometheusCustomCollector())
     metrics_app = make_wsgi_app()
     httpd = make_server('', 8000, exporter)
     httpd.serve_forever()
+
+
+if __name__ == '__main__':
+    main()
