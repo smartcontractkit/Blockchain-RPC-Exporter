@@ -5,11 +5,6 @@ from interfaces import WebsocketInterface, HttpsInterface
 class EvmCollector(WebsocketInterface):
     """A collector to fetch information about evm compatible RPC endpoints."""
 
-    # We only override __getattr__ method for collectors that do not implement all attributes.
-    # (alive, disconnects, heads_received, block_height, client_version, total_difficulty)
-    def __getattr__(self, name):
-        return None
-
     def __init__(self, url, labels, chain_id, **client_parameters):
         self.labels = labels
         self.chain_id = chain_id
@@ -48,10 +43,6 @@ class EvmCollector(WebsocketInterface):
 
 class ConfluxCollector(WebsocketInterface):
     """A collector to fetch information about conflux RPC endpoints."""
-
-    # Override __getattr_ since we don't have all metrics implemented for our registry.
-    def __getattr__(self, name):
-        return None
 
     def __init__(self, url, labels, chain_id, **client_parameters):
         self.labels = labels
@@ -92,10 +83,6 @@ class ConfluxCollector(WebsocketInterface):
 class CardanoCollector(WebsocketInterface):
     """A collector to fetch information about conflux RPC endpoints."""
 
-    # Override __getattr_ since we don't have all metrics implemented for our registry.
-    def __getattr__(self, name):
-        return None
-
     def __init__(self, url, labels, chain_id, **client_parameters):
         self.labels = labels
         self.chain_id = chain_id
@@ -115,10 +102,6 @@ class CardanoCollector(WebsocketInterface):
 
 class BitcoinCollector(HttpsInterface):
     """A collector to fetch information about Bitcoin RPC endpoints."""
-
-    # Override __getattr_ since we don't have all metrics implemented for our registry.
-    def __getattr__(self, name):
-        return None
 
     def __init__(self, url, labels, chain_id, **client_parameters):
 
@@ -173,10 +156,6 @@ class BitcoinCollector(HttpsInterface):
 class FilecoinCollector(HttpsInterface):
     """A collector to fetch information about conflux RPC endpoints."""
 
-    # Override __getattr_ since we don't have all metrics implemented for our registry.
-    def __getattr__(self, name):
-        return None
-
     def __init__(self, url, labels, chain_id, **client_parameters):
 
         self.labels = labels
@@ -222,10 +201,6 @@ class FilecoinCollector(HttpsInterface):
 class SolanaCollector(HttpsInterface):
     """A collector to fetch information about conflux RPC endpoints."""
 
-    # Override __getattr_ since we don't have all metrics implemented for our registry.
-    def __getattr__(self, name):
-        return None
-
     def __init__(self, url, labels, chain_id, **client_parameters):
 
         self.labels = labels
@@ -270,10 +245,6 @@ class SolanaCollector(HttpsInterface):
 
 class StarkwareCollector(HttpsInterface):
     """A collector to fetch information about conflux RPC endpoints."""
-
-    # Override __getattr_ since we don't have all metrics implemented for our registry.
-    def __getattr__(self, name):
-        return None
 
     def __init__(self, url, labels, chain_id, **client_parameters):
 

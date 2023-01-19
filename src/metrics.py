@@ -80,20 +80,20 @@ class PrometheusCustomCollector():  #pylint: disable=too-few-public-methods
             alive = collector.alive
             health_metric.add_metric(collector.labels, alive)
             if alive:
-                if collector.disconnects is not None:
+                if hasattr(collector, "disconnects"):
                     disconnects_metric.add_metric(collector.labels,
                                                   collector.disconnects)
-                if collector.heads_received is not None:
+                if hasattr(collector, "heads_received"):
                     heads_received_metric.add_metric(collector.labels,
                                                      collector.heads_received)
-                if collector.block_height is not None:
+                if hasattr(collector, "block_height"):
                     block_height_metric.add_metric(collector.labels,
                                                    collector.block_height)
-                if collector.client_version is not None:
+                if hasattr(collector, "client_version"):
                     client_version_metric.add_metric(
                         collector.labels,
                         value={"client_version": collector.client_version})
-                if collector.total_difficulty is not None:
+                if hasattr(collector, "total_difficulty"):
                     total_difficulty_metric.add_metric(
                         collector.labels, collector.total_difficulty)
 
