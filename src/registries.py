@@ -1,6 +1,9 @@
 """A module that providers registries of objects."""
+import sys
+
 from configuration import Config
 import collectors
+from log import logger
 
 
 class Endpoint():  # pylint: disable=too-few-public-methods
@@ -20,6 +23,11 @@ class Endpoint():  # pylint: disable=too-few-public-methods
 
 class EndpointRegistry(Config):
     """A registry of all endpoints."""
+
+    def __init__(self):
+        super().__init__()
+        self._logger = logger
+        self._logger_metadata = {'component': 'Registries'}
 
     @property
     def blockchain(self):
@@ -74,10 +82,11 @@ class CollectorRegistry(EndpointRegistry):
                 case "evm", other:  # pylint: disable=unused-variable
                     collector = collectors.EvmCollector
             if collector is None:
-                # TODO log this error properly
-                self._logger.error(
-                    f"collector: {self.collector} on bloackchain: {self.blockchain} not found"
-                )
+                self._logger.error("Endpoint has no supported collector",
+                                   collector=self.collector,
+                                   blockchain=self.blockchain,
+                                   **self._logger_metadata)
+                sys.exit(1)
             else:
                 collectors_list.append(collector(item.url,
                                                  item.labels, item.chain_id,
