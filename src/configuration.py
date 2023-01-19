@@ -17,6 +17,7 @@ class Config():
                                                  default='/config/config.yml')
         self.validation_file_path = os.getenv('VALIDATION_FILE_PATH',
                                               default='/config/validation.yml')
+        self._configuration = self._load_configuration()
 
     def get_property(self, property_name):
         """Gets a key from loaded configuration. Returns dynamic types.
@@ -43,8 +44,7 @@ class Config():
         """Returns endpoints dict from the configuration."""
         return self.get_property('endpoints')
 
-    @property
-    def _configuration(self):
+    def _load_configuration(self):
         allowed_providers = self._load_validation_file()
         supported_collectors = ('evm', 'cardano', 'conflux', 'solana',
                                 'bitcoin', 'doge', 'filecoin', 'starkware')
