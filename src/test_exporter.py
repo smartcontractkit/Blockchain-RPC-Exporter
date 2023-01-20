@@ -19,12 +19,12 @@ class TestExporter(TestCase):
         return200(None, self.start_fn_mock)
         self.start_fn_mock.assert_called_once_with('200 OK', [])
 
-    def test_return_400_return(self):
+    def test_return_404_return(self):
         """Tests the return of the return404 function"""
         self.assertEqual([b'Not implemented.'],
                          return404(None, self.start_fn_mock))
 
-    def test_return_400_start_fn_call(self):
+    def test_return_404_start_fn_call(self):
         """Tests that return404 starts an HTTP response with correct status code and headers"""
         return404(None, self.start_fn_mock)
         self.start_fn_mock.assert_called_once_with('404 Not Found', [])
