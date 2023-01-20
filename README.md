@@ -17,7 +17,7 @@ Please note that this tool is in the early development stage and should not be u
 The project in its current form suits our short-term needs and will receive limited support. We encourage you to fork the project and extend it with additional functionality you might need.
 
 ## Development
-You should install [pre-commit](https://pre-commit.com/) so that automated linting and formatting checks are performed before each commit. 
+You should install [pre-commit](https://pre-commit.com/) so that automated linting and formatting checks are performed before each commit.
 
 Run:
 ```bash
@@ -25,7 +25,7 @@ pip install pre-commit
 pre-commit install
 ```
 ### Running locally
-1. Make sure you have python3 installed (>3.9.10)
+1. Make sure you have python3 installed (>3.11)
 2. Set up your python environment
 ```bash
 pip3 install virtualenv
