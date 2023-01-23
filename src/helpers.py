@@ -1,3 +1,4 @@
+#Importing necessary libraries for smart contract for the Blockchain Remote Procedure Call
 import urllib.parse
 from time import perf_counter
 import json
