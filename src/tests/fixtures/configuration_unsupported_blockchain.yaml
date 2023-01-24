@@ -1,8 +1,8 @@
-blockchain: "fake"
+blockchain: "bitcoin"
 chain_id: 1234
 network_name: "TestNetwork"
 network_type: "Mainnet"
-collector: "fake"
+collector: "cardano"
 endpoints:
   - url: wss://test1.com
     provider: TestProvider1

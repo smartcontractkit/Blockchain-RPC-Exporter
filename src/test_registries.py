@@ -49,7 +49,8 @@ class TestEndpointRegistry(TestCase):
         """Tests that the logger metadata is correct"""
         expected_metadata = {'component': 'Registries'}
         self.assertDictEqual(
-            expected_metadata, self.endpoint_registry._logger_metadata)
+            expected_metadata,
+            self.endpoint_registry._logger_metadata)  # pylint: disable=protected-access
 
     def test_blockchain_property(self):
         """Tests the blockchain property returns the correct value"""
@@ -62,6 +63,9 @@ class TestEndpointRegistry(TestCase):
 
 class TestCollectorRegistry(TestCase):
     """Tests the CollectorRegistry class"""
+
+    def setUp(self):
+        self.collector_registry = None
 
     @mock.patch.dict(os.environ, {
         "CONFIG_FILE_PATH": "tests/fixtures/configuration_conflux.yaml",
@@ -141,7 +145,7 @@ class TestCollectorRegistry(TestCase):
         """Tests that the program exits when loading a config file with an unsupported chain"""
         with self.assertRaises(SystemExit) as cm:
             self.collector_registry = CollectorRegistry()
-            self.collector_registry.get_collector_registry
+            self.collector_registry.get_collector_registry  # pylint: disable=pointless-statement
         self.assertEqual(1, cm.exception.code)
 
     @mock.patch.dict(os.environ, {
@@ -153,7 +157,7 @@ class TestCollectorRegistry(TestCase):
         try:
             with capture_logs() as captured:
                 self.collector_registry = CollectorRegistry()
-                self.collector_registry.get_collector_registry
+                self.collector_registry.get_collector_registry  # pylint: disable=pointless-statement
         except SystemExit:
             # Catch and pass on expected SystemExit so tests keep running
             pass
@@ -168,7 +172,7 @@ class TestCollectorRegistry(TestCase):
         try:
             with capture_logs() as captured:
                 self.collector_registry = CollectorRegistry()
-                self.collector_registry.get_collector_registry
+                self.collector_registry.get_collector_registry  # pylint: disable=pointless-statement
         except SystemExit:
             # Catch and pass on expected SystemExit so tests keep running
             pass
