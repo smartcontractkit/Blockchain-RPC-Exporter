@@ -43,7 +43,7 @@ class HttpsInterface():
                                json=payload,
                                timeout=Timeout(connect=self.connect_timeout,
                                                read=self.response_timeout))
-                if req.status_code == requests.codes.ok:  #pylint: disable=no-member
+                if req.status_code == requests.codes.ok:  # pylint: disable=no-member
                     return req.text
             except (IOError, requests.HTTPError,
                     json.decoder.JSONDecodeError) as error:
@@ -55,7 +55,7 @@ class HttpsInterface():
             return None
 
     def json_rpc_post(self, payload):
-        """Checks the validity of a successful json-rpc response. If any of the 
+        """Checks the validity of a successful json-rpc response. If any of the
         validations fail, the method returns type None. """
         response = self._return_and_validate_post_request(payload)
         if response is not None:
@@ -63,7 +63,7 @@ class HttpsInterface():
                 response, self._logger_metadata)
             if result is not None:
                 return result
-        return response
+        return None
 
     def cached_json_rpc_post(self, payload: dict, invalidate_cache=False):
         """Calls json_rpc_post and stores the result in in-memory
@@ -80,10 +80,10 @@ class HttpsInterface():
         value = self.json_rpc_post(payload)
         if value is not None:
             self.cache.store_key_value(cache_key, value)
-        return value
+        return None
 
 
-class WebsocketSubscription(threading.Thread):  #pylint: disable=too-many-instance-attributes
+class WebsocketSubscription(threading.Thread):  # pylint: disable=too-many-instance-attributes
     """A thread class used to subscribe and track
     websocket parameters."""
 
@@ -180,7 +180,7 @@ class WebsocketSubscription(threading.Thread):  #pylint: disable=too-many-instan
                 continue
 
 
-class WebsocketInterface(WebsocketSubscription):  #pylint: disable=too-many-instance-attributes
+class WebsocketInterface(WebsocketSubscription):  # pylint: disable=too-many-instance-attributes
     """A websocket interface, to interact with websocket RPC endpoints."""
 
     def __init__(self, url, sub_payload=None, **client_parameters):
@@ -245,8 +245,8 @@ class WebsocketInterface(WebsocketSubscription):  #pylint: disable=too-many-inst
                                    **self._logger_metadata)
                 return None
 
-            if skip_checks:
-                return self._load_and_validate_json_key(result, 'result')
+        if skip_checks:
+            return self._load_and_validate_json_key(result, 'result')
 
-            return return_and_validate_rpc_json_result(result,
-                                                       self._logger_metadata)
+        return return_and_validate_rpc_json_result(result,
+                                                   self._logger_metadata)
