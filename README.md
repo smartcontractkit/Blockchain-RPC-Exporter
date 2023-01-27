@@ -53,7 +53,7 @@ export CONFIG_FILE_PATH="src/config.yml"  # For example if we saved config file 
 3. Execute
 ```bash
 docker-compose build
-docker-compose-up
+docker-compose up
 curl localhost:8000/metrics # Exporter
 curl localhost:3000         # Grafana
 curl localhost:9090         # Prometheus
