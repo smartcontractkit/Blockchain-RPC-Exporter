@@ -5,6 +5,7 @@ from unittest import TestCase, IsolatedAsyncioTestCase, mock
 from structlog.testing import capture_logs
 import requests
 import requests_mock
+from asyncio.exceptions import TimeoutError
 
 from interfaces import HttpsInterface, WebsocketSubscription, WebsocketInterface
 from cache import Cache
@@ -76,7 +77,7 @@ class TestWebSocketSubscription(TestCase):
 
     def setUp(self):
         self.url = "wss://test.com/?apikey=123456"
-        self.client_params = {"dummy": "data"}
+        self.client_params = {"ping_timeout": 3}
         self.web_sock_sub = WebsocketSubscription(
             self.url, self.client_params)
 
@@ -100,6 +101,11 @@ class TestWebSocketInterface(IsolatedAsyncioTestCase):
         self.client_params = {"ping_timeout": 7}
         self.web_sock_interface = WebsocketInterface(
             self.url, **self.client_params)
+
+    def test_client_params(self):
+        """Tests that the client params attribute is set correctly"""
+        self.assertEqual(self.client_params,
+                         self.web_sock_interface._client_parameters)
 
     def test_load_and_validate_json_key_valid_json(self):
         """Tests that the correct value for a key is returned when providing valid json"""
@@ -127,6 +133,16 @@ class TestWebSocketInterface(IsolatedAsyncioTestCase):
                 message, key)
         self.assertTrue(any([log['log_level'] == "error" for log in captured]))
 
+    def test_load_and_validate_json_key_valid_json_no_error_log(self):
+        """Tests that no error is logged when the json message does contain the specified key"""
+        message = '{"result": "valid"}'
+        key = "result"
+        with capture_logs() as captured:
+            self.web_sock_interface._load_and_validate_json_key(
+                message, key)
+        self.assertFalse(
+            any([log['log_level'] == "error" for log in captured]))
+
     def test_query_call(self):
         """Tests that the query function calls the _query function with correct args"""
         with mock.patch('interfaces.WebsocketInterface._query') as mocked_query:
@@ -147,3 +163,62 @@ class TestWebSocketInterface(IsolatedAsyncioTestCase):
             websocket.return_value.__aenter__.return_value.recv.return_value = '{"result":"dummy data"}'
             resp_data = await self.web_sock_interface._query("payload", True)
             self.assertEqual("dummy data", resp_data)
+
+    async def test_async_query_send(self):
+        """Tests that the websocket send method is called with the correct args"""
+        with mock.patch('interfaces.connect', autospec=True) as websocket:
+            send_mock = mock.AsyncMock()
+            websocket.return_value.__aenter__.return_value.recv.return_value = '{"result":"dummy data"}'
+            websocket.return_value.__aenter__.return_value.send = send_mock
+            await self.web_sock_interface._query("payload", True)
+            send_mock.assert_awaited_once_with('"payload"')
+
+    async def test_async_query_timeout_return(self):
+        """Tests that the query method returns None on a websocket timeout"""
+        with mock.patch('interfaces.connect', autospec=True) as websocket:
+            # Convert websocket send method from async to regular mock since wait_for will be mocked
+            websocket.return_value.__aenter__.return_value.send = mock.Mock()
+            with mock.patch('interfaces.asyncio.wait_for', side_effect=TimeoutError):
+                result = await self.web_sock_interface._query("payload", True)
+                self.assertEqual(None, result)
+
+    def test_cache_query_retrieve_valid_key(self):
+        """Tests that the retrieve_key_value method is called and returns a value if the key is in the cache"""
+        with mock.patch('interfaces.Cache') as mocked_cache:
+            mocked_cache.is_cached.return_value = True
+            mocked_cache.retrieve_key_value.return_value = 'value'
+            self.web_sock_interface.cache = mocked_cache
+            result = self.web_sock_interface.cached_query('key')
+            self.assertEqual('value', result)
+
+    def test_cache_query_invalidate_cache(self):
+        """Tests that the cache is invalidated"""
+        with mock.patch('interfaces.Cache', autospec=True) as mocked_cache:
+            mocked_cache.is_cached.return_value = True
+            self.web_sock_interface.cache = mocked_cache
+            self.web_sock_interface.cached_query('key', False, True)
+            mocked_cache.remove_key_from_cache.assert_called_once_with('key')
+
+    def test_cache_query_retrieve_invalid_key(self):
+        """Tests that the query method is called for a key not in the cache"""
+        with mock.patch('interfaces.WebsocketInterface.query') as mocked_query:
+            self.web_sock_interface.cached_query('key', False)
+            mocked_query.assert_called_once_with('key', False)
+
+    def test_cache_query_retrieve_invalid_key_added_to_cache(self):
+        """Tests that the method adds key to cache if it doesn't already exist"""
+        with mock.patch('interfaces.WebsocketInterface.query') as mocked_query:
+            mocked_query.return_value = 'value'
+            with mock.patch('interfaces.Cache', autospec=True) as mocked_cache:
+                mocked_cache.is_cached.return_value = False
+                self.web_sock_interface.cache = mocked_cache
+                self.web_sock_interface.cached_query('key')
+                mocked_cache.store_key_value.assert_called_once_with(
+                    'key', 'value')
+
+    def test_cache_query_retrieve_invalid_key_bad_query(self):
+        """Tests that the method returns None if key is not in cache and query returns None"""
+        with mock.patch('interfaces.WebsocketInterface.query') as mocked_query:
+            mocked_query.return_value = None
+            result = self.web_sock_interface.cached_query('key', False)
+            self.assertEqual(None, result)

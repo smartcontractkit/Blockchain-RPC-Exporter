@@ -209,7 +209,7 @@ class WebsocketInterface(WebsocketSubscription):  # pylint: disable=too-many-ins
                 self.cache.remove_key_from_cache(cache_key)
             return value
 
-        value = asyncio.run(self._query(payload, skip_checks))
+        value = self.query(payload, skip_checks)
         if value is not None:
             self.cache.store_key_value(cache_key, value)
         return value
