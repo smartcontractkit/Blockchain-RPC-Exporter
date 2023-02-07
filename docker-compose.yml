@@ -18,7 +18,7 @@ services:
       - monitoring
     volumes:
       - type: bind
-        source: ${PWD}/${CONFIGURATION_FILE_PATH}
+        source: ${PWD}/${CONFIG_FILE_PATH}
         target: /config/config.yml
       - type: bind
         source: ${PWD}/${VALIDATION_FILE_PATH}
