@@ -16,7 +16,7 @@ def return404(_, start_fn):
     return [b'Not implemented.']
 
 
-def exporter(environ, start_fn):  #pylint: disable=inconsistent-return-statements
+def exporter(environ, start_fn):  # pylint: disable=inconsistent-return-statements
     """Web-server endpoints routing."""
     if environ['PATH_INFO'] == '/metrics':
         return metrics_app(environ, start_fn)
