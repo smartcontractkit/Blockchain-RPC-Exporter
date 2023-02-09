@@ -18,12 +18,15 @@ def return404(_, start_fn):
 
 def exporter(environ, start_fn):  # pylint: disable=inconsistent-return-statements
     """Web-server endpoints routing."""
-    if environ['PATH_INFO'] == '/metrics':
-        return metrics_app(environ, start_fn)
-    if environ['PATH_INFO'] == '/readiness':
-        return return200(environ, start_fn)
-    if environ['PATH_INFO'] == '/liveness':
-        return return200(environ, start_fn)
+    match environ['PATH_INFO']:
+        case '/metrics':
+            return metrics_app(environ, start_fn)
+        case '/readiness':
+            return return200(environ, start_fn)
+        case '/liveness':
+            return return200(environ, start_fn)
+        case _:
+            return return404(environ, start_fn)
 
 
 if __name__ == '__main__':
