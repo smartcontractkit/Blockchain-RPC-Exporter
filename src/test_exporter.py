@@ -44,3 +44,19 @@ class TestExporter(TestCase):
         with mock.patch('exporter.return200') as mocked:
             exporter(environ, self.start_fn_mock)
             mocked.assert_called_once_with(environ, self.start_fn_mock)
+
+    def test_exporter_404(self):
+        """Tests that an unknown path invokes return404
+        with the environ and HTTP response callable"""
+        environ = {'PATH_INFO': '/dummypath'}
+        with mock.patch('exporter.return404') as mocked:
+            exporter(environ, self.start_fn_mock)
+            mocked.assert_called_once_with(environ, self.start_fn_mock)
+
+    def test_exporter_metrics_path(self):
+        """Tests that the metrics path invokes metrics_app
+        with the environ and HTTP response callable"""
+        environ = {'PATH_INFO': '/metrics'}
+        with mock.patch('exporter.metrics_app', create=True) as mocked:
+            exporter(environ, self.start_fn_mock)
+            mocked.assert_called_once_with(environ, self.start_fn_mock)
