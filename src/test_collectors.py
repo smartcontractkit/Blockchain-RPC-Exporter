@@ -292,7 +292,7 @@ class TestBitcoinCollector(TestCase):
         """Tests the client_version function uses the correct call and args to get client version"""
         self.bitcoin_collector.client_version  # pylint: disable=pointless-statement
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
-            self.network_info_payload)
+            self.network_info_payload, invalidate_cache=True)
 
     def test_client_version_get_blocks_key(self):
         """Tests that the client version is returned as a string with the version key"""

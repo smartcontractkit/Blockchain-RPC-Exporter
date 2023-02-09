@@ -168,7 +168,7 @@ class BitcoinCollector():
     def client_version(self):
         """Runs a cached query to return client version."""
         blockchain_info = self.https_interface.cached_json_rpc_post(
-            self.network_info_payload)
+            self.network_info_payload, invalidate_cache=True)
         return validate_dict_and_return_key_value(
             blockchain_info, 'version', self._logger_metadata, stringify=True)
 
