@@ -1,5 +1,6 @@
 """Module for providing interfaces to interact with https and websocket RPC endpoints."""
 from interfaces import WebsocketInterface, HttpsInterface
+from helpers import validate_dict_and_return_key_value, strip_url
 
 
 class EvmCollector():
@@ -122,7 +123,10 @@ class BitcoinCollector():
         self.chain_id = chain_id
         self.https_interface = HttpsInterface(url, client_parameters.get('open_timeout'),
                                               client_parameters.get('ping_timeout'))
-
+        self._logger_metadata = {
+            'component': 'BitcoinCollector',
+            'url': strip_url(url)
+        }
         self.network_info_payload = {
             "jsonrpc": "1.0",
             "id": "exporter",
@@ -149,29 +153,24 @@ class BitcoinCollector():
         followed with total_difficulty and client_version calls so the cache is cleared."""
         blockchain_info = self.https_interface.cached_json_rpc_post(
             self.blockchain_info_payload)
-        if isinstance(blockchain_info, dict):
-            return blockchain_info.get('blocks')
-        return None
+        return validate_dict_and_return_key_value(
+            blockchain_info, 'blocks', self._logger_metadata)
 
     @property
     def total_difficulty(self):
         """Gets total difficulty from a previous call and clears the cache."""
         blockchain_info = self.https_interface.cached_json_rpc_post(
             self.blockchain_info_payload, invalidate_cache=True)
-        if isinstance(blockchain_info, dict):
-            return blockchain_info.get('difficulty')
-        return None
+        return validate_dict_and_return_key_value(
+            blockchain_info, 'difficulty', self._logger_metadata)
 
     @property
     def client_version(self):
         """Runs a cached query to return client version."""
         blockchain_info = self.https_interface.cached_json_rpc_post(
             self.network_info_payload, invalidate_cache=True)
-        if isinstance(blockchain_info, dict):
-            version = blockchain_info.get('version')
-            if version is not None:
-                return str(version)
-        return None
+        return validate_dict_and_return_key_value(
+            blockchain_info, 'version', self._logger_metadata, stringify=True)
 
 
 class FilecoinCollector():
@@ -183,7 +182,10 @@ class FilecoinCollector():
         self.chain_id = chain_id
         self.https_interface = HttpsInterface(url, client_parameters.get('open_timeout'),
                                               client_parameters.get('ping_timeout'))
-
+        self._logger_metadata = {
+            'component': 'FilecoinCollector',
+            'url': strip_url(url)
+        }
         self.client_version_payload = {
             'jsonrpc': '2.0',
             'method': "Filecoin.Version",
@@ -210,20 +212,16 @@ class FilecoinCollector():
         followed with total_difficulty and client_version calls so the cache is cleared."""
         blockchain_info = self.https_interface.cached_json_rpc_post(
             self.block_height_payload)
-        if isinstance(blockchain_info, dict):
-            return blockchain_info.get('Height')
-        return None
+        return validate_dict_and_return_key_value(
+            blockchain_info, 'Height', self._logger_metadata)
 
     @property
     def client_version(self):
         """Runs a cached query to return client version."""
         blockchain_info = self.https_interface.cached_json_rpc_post(
             self.client_version_payload, invalidate_cache=True)
-        if isinstance(blockchain_info, dict):
-            version = blockchain_info.get('Version')
-            if version is not None:
-                return str(version)
-        return None
+        return validate_dict_and_return_key_value(
+            blockchain_info, 'Version', self._logger_metadata, stringify=True)
 
 
 class SolanaCollector():
@@ -235,7 +233,10 @@ class SolanaCollector():
         self.chain_id = chain_id
         self.https_interface = HttpsInterface(url, client_parameters.get('open_timeout'),
                                               client_parameters.get('ping_timeout'))
-
+        self._logger_metadata = {
+            'component': 'SolanaCollector',
+            'url': strip_url(url)
+        }
         self.client_version_payload = {
             'jsonrpc': '2.0',
             'method': "getVersion",
@@ -267,11 +268,8 @@ class SolanaCollector():
         """Runs a cached query to return client version."""
         blockchain_info = self.https_interface.cached_json_rpc_post(
             self.client_version_payload, invalidate_cache=True)
-        if isinstance(blockchain_info, dict):
-            version = blockchain_info.get('solana-core')
-            if version is not None:
-                return str(version)
-        return None
+        return validate_dict_and_return_key_value(
+            blockchain_info, 'solana-core', self._logger_metadata, stringify=True)
 
 
 class StarkwareCollector():

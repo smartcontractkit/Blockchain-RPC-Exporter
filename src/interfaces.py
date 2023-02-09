@@ -80,7 +80,7 @@ class HttpsInterface():
         value = self.json_rpc_post(payload)
         if value is not None:
             self.cache.store_key_value(cache_key, value)
-        return None
+        return value
 
 
 class WebsocketSubscription(threading.Thread):  # pylint: disable=too-many-instance-attributes

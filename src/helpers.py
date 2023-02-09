@@ -31,3 +31,18 @@ def return_and_validate_rpc_json_result(message: str, logger_metadata) -> dict:
                      error=error,
                      **logger_metadata)
     return None
+
+
+def validate_dict_and_return_key_value(data, key, logger_metadata, stringify=False):
+    """Validates that a dict is provided and returns the key value either in
+    original form or as a string"""
+    if isinstance(data, dict):
+        value = data.get(key)
+        if value is not None:
+            if stringify:
+                return str(value)
+            return value
+    logger.error("Provided data is not a dict or has no value for key",
+                 key=key,
+                 **logger_metadata)
+    return None

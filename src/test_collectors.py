@@ -211,6 +211,14 @@ class TestBitcoinCollector(TestCase):
                 self.url, self.labels, self.chain_id, **self.client_params)
             self.mocked_connection = mocked_connection
 
+    def test_logger_metadata(self):
+        """Validate logger metadata. Makes sure url is stripped by helpers.strip_url
+        function."""
+        expected_metadata = {
+            'component': 'BitcoinCollector', 'url': 'test.com'}
+        self.assertEqual(expected_metadata,
+                         self.bitcoin_collector._logger_metadata)
+
     def test_https_interface_created(self):
         """Tests that the bitcoin collector calls the https interface with the correct args"""
         self.mocked_connection.assert_called_once_with(
@@ -333,6 +341,14 @@ class TestFilecoinCollector(TestCase):
                 self.url, self.labels, self.chain_id, **self.client_params)
             self.mocked_connection = mocked_connection
 
+    def test_logger_metadata(self):
+        """Validate logger metadata. Makes sure url is stripped by helpers.strip_url
+        function."""
+        expected_metadata = {
+            'component': 'FilecoinCollector', 'url': 'test.com'}
+        self.assertEqual(expected_metadata,
+                         self.filecoin_collector._logger_metadata)
+
     def test_https_interface_created(self):
         """Tests that the filecoin collector calls the https interface with the correct args"""
         self.mocked_connection.assert_called_once_with(
@@ -428,6 +444,14 @@ class TestSolanaCollector(TestCase):
             self.solana_collector = collectors.SolanaCollector(
                 self.url, self.labels, self.chain_id, **self.client_params)
             self.mocked_connection = mocked_connection
+
+    def test_logger_metadata(self):
+        """Validate logger metadata. Makes sure url is stripped by helpers.strip_url
+        function."""
+        expected_metadata = {
+            'component': 'SolanaCollector', 'url': 'test.com'}
+        self.assertEqual(expected_metadata,
+                         self.solana_collector._logger_metadata)
 
     def test_https_interface_created(self):
         """Tests that the solana collector calls the https interface with the correct args"""
