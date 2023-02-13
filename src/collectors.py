@@ -106,12 +106,12 @@ class CardanoCollector():
 
     def alive(self):
         """Returns true if endpoint is alive, false if not."""
-        return self.websocket.query(self.block_height_payload,
-                                    skip_checks=True) is not None
+        return self.websocket.cached_query(self.block_height_payload,
+                                           skip_checks=True) is not None
 
     def block_height(self):
         """Returns latest block height."""
-        return self.websocket.query(self.block_height_payload, skip_checks=True)
+        return self.websocket.cached_query(self.block_height_payload, skip_checks=True)
 
     def invalidate_cache(self):
         """Clears the entire cache"""
