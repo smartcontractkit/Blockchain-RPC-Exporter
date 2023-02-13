@@ -60,7 +60,7 @@ class MetricsLoader():
             labels=self._labels)
 
 
-class PrometheusCustomCollector():  #pylint: disable=too-few-public-methods
+class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
     """https://github.com/prometheus/client_python#custom-collectors"""
 
     def __init__(self):
@@ -69,6 +69,9 @@ class PrometheusCustomCollector():  #pylint: disable=too-few-public-methods
 
     def collect(self):
         """This method is called each time /metric is called."""
+
+        metric_names = ["alive", "disconnects", "heads_received",
+                        "block_height", "client_version", "total_difficulty"]
         health_metric = self._metrics_loader.health_metric
         heads_received_metric = self._metrics_loader.heads_received_metric
         disconnects_metric = self._metrics_loader.disconnects_metric
@@ -76,31 +79,45 @@ class PrometheusCustomCollector():  #pylint: disable=too-few-public-methods
         client_version_metric = self._metrics_loader.client_version_metric
         total_difficulty_metric = self._metrics_loader.total_difficulty_metric
 
-        def _write_metrics(collector):
-            alive = collector.alive
+        def _write_metrics(collector, futures_dict):
+            alive = futures_dict["alive"].result()
+            del futures_dict["alive"]
             health_metric.add_metric(collector.labels, alive)
             if alive:
-                if hasattr(collector, "disconnects"):
-                    disconnects_metric.add_metric(collector.labels,
-                                                  collector.disconnects)
-                if hasattr(collector, "heads_received"):
-                    heads_received_metric.add_metric(collector.labels,
-                                                     collector.heads_received)
-                if hasattr(collector, "block_height"):
-                    block_height_metric.add_metric(collector.labels,
-                                                   collector.block_height)
-                if hasattr(collector, "client_version"):
-                    client_version_metric.add_metric(
-                        collector.labels,
-                        value={"client_version": collector.client_version})
-                if hasattr(collector, "total_difficulty"):
-                    total_difficulty_metric.add_metric(
-                        collector.labels, collector.total_difficulty)
+                for name_key, future in futures_dict.items():
+                    result = future.result()
+                    if result is not None:
+                        match name_key:
+                            case "disconnects":
+                                disconnects_metric.add_metric(
+                                    collector.labels, result)
+                            case "heads_received":
+                                heads_received_metric.add_metric(
+                                    collector.labels, result)
+                            case "block_height":
+                                block_height_metric.add_metric(
+                                    collector.labels, result)
+                            case "client_version":
+                                client_version_metric.add_metric(collector.labels, value={
+                                    "client_version": result})
+                            case "total_difficulty":
+                                total_difficulty_metric.add_metric(
+                                    collector.labels, result)
+            else:
+                for future in futures_dict.values():
+                    future.cancel()
+            collector.invalidate_cache()
 
         with ThreadPoolExecutor(
-                max_workers=len(self._collector_registry)) as executor:
+                max_workers=len(self._collector_registry) * len(metric_names)) as executor:
             for collector in self._collector_registry:
-                executor.submit(_write_metrics, collector)
+                futures_dict = {}
+                for metric_name in metric_names:
+                    metric_call = getattr(collector, metric_name, None)
+                    if metric_call is not None:
+                        futures_dict[metric_name] = executor.submit(
+                            metric_call)
+                executor.submit(_write_metrics, collector, futures_dict)
 
         yield health_metric
         yield heads_received_metric

@@ -21,17 +21,14 @@ class EvmCollector():
         self.websocket.daemon = True
         self.websocket.start()
 
-    @property
     def alive(self):
         """Returns if the websocket subscription is healthy."""
         return self.websocket.healthy
 
-    @property
     def block_height(self):
         """Returns latest block height."""
         return self.websocket.get_message_property_to_hex('number')
 
-    @property
     def client_version(self):
         """Runs a cached query to return client version."""
         payload = {
@@ -41,6 +38,10 @@ class EvmCollector():
             "id": self.chain_id
         }
         return self.websocket.cached_query(payload)
+
+    def invalidate_cache(self):
+        """Clears the entire cache"""
+        self.websocket.cache.clear_cache()
 
 
 class ConfluxCollector():
@@ -61,17 +62,14 @@ class ConfluxCollector():
         self.websocket.daemon = True
         self.websocket.start()
 
-    @property
     def alive(self):
         """Returns if the websocket subscription is healthy."""
         return self.websocket.healthy
 
-    @property
     def block_height(self):
         """Returns latest block height."""
         return self.websocket.get_message_property_to_hex('height')
 
-    @property
     def client_version(self):
         """Runs a cached query to return client version."""
         payload = {
@@ -81,6 +79,10 @@ class ConfluxCollector():
             "id": self.chain_id
         }
         return self.websocket.cached_query(payload)
+
+    def invalidate_cache(self):
+        """Clears the entire cache"""
+        self.websocket.cache.clear_cache()
 
 
 class CardanoCollector():
@@ -102,16 +104,18 @@ class CardanoCollector():
             url, **client_parameters)
         self.websocket.daemon = None
 
-    @property
     def alive(self):
         """Returns true if endpoint is alive, false if not."""
-        return self.websocket.cached_query(self.block_height_payload,
-                                           skip_checks=True) is not None
+        return self.websocket.query(self.block_height_payload,
+                                    skip_checks=True) is not None
 
-    @property
     def block_height(self):
         """Returns latest block height."""
         return self.websocket.query(self.block_height_payload, skip_checks=True)
+
+    def invalidate_cache(self):
+        """Clears the entire cache"""
+        self.websocket.cache.clear_cache()
 
 
 class BitcoinCollector():
@@ -139,14 +143,12 @@ class BitcoinCollector():
             "params": []
         }
 
-    @property
     def alive(self):
         """Returns true if endpoint is alive, false if not."""
         # Run cached query because we can also fetch client version from this
         # later on. This will save us an RPC call per run.
         return self.https_interface.cached_json_rpc_post(self.network_info_payload) is not None
 
-    @property
     def block_height(self):
         """Returns latest block height. Cache is cleared when total_difficulty is fetched.
         In order for this collector to work, alive and block_height calls need to be
@@ -156,21 +158,23 @@ class BitcoinCollector():
         return validate_dict_and_return_key_value(
             blockchain_info, 'blocks', self._logger_metadata)
 
-    @property
     def total_difficulty(self):
         """Gets total difficulty from a previous call and clears the cache."""
         blockchain_info = self.https_interface.cached_json_rpc_post(
-            self.blockchain_info_payload, invalidate_cache=True)
+            self.blockchain_info_payload)
         return validate_dict_and_return_key_value(
             blockchain_info, 'difficulty', self._logger_metadata)
 
-    @property
     def client_version(self):
         """Runs a cached query to return client version."""
         blockchain_info = self.https_interface.cached_json_rpc_post(
-            self.network_info_payload, invalidate_cache=True)
+            self.network_info_payload)
         return validate_dict_and_return_key_value(
             blockchain_info, 'version', self._logger_metadata, stringify=True)
+
+    def invalidate_cache(self):
+        """Clears the entire cache"""
+        self.https_interface.cache.clear_cache()
 
 
 class FilecoinCollector():
@@ -197,7 +201,6 @@ class FilecoinCollector():
             'id': 1
         }
 
-    @property
     def alive(self):
         """Returns true if endpoint is alive, false if not."""
         # Run cached query because we can also fetch client version from this
@@ -205,7 +208,6 @@ class FilecoinCollector():
         return self.https_interface.cached_json_rpc_post(
             self.client_version_payload) is not None
 
-    @property
     def block_height(self):
         """Returns latest block height. Cache is cleared when total_difficulty is fetched.
         In order for this collector to work, alive and block_height calls need to be
@@ -215,13 +217,16 @@ class FilecoinCollector():
         return validate_dict_and_return_key_value(
             blockchain_info, 'Height', self._logger_metadata)
 
-    @property
     def client_version(self):
         """Runs a cached query to return client version."""
         blockchain_info = self.https_interface.cached_json_rpc_post(
-            self.client_version_payload, invalidate_cache=True)
+            self.client_version_payload)
         return validate_dict_and_return_key_value(
             blockchain_info, 'Version', self._logger_metadata, stringify=True)
+
+    def invalidate_cache(self):
+        """Clears the entire cache"""
+        self.https_interface.cache.clear_cache()
 
 
 class SolanaCollector():
@@ -248,7 +253,6 @@ class SolanaCollector():
             'id': 1
         }
 
-    @property
     def alive(self):
         """Returns true if endpoint is alive, false if not."""
         # Run cached query because we can also fetch client version from this
@@ -256,20 +260,22 @@ class SolanaCollector():
         return self.https_interface.cached_json_rpc_post(
             self.client_version_payload) is not None
 
-    @property
     def block_height(self):
         """Returns latest block height. Cache is cleared when total_difficulty is fetched.
         In order for this collector to work, alive and block_height calls need to be
         followed with total_difficulty and client_version calls so the cache is cleared."""
         return self.https_interface.cached_json_rpc_post(self.block_height_payload)
 
-    @property
     def client_version(self):
         """Runs a cached query to return client version."""
         blockchain_info = self.https_interface.cached_json_rpc_post(
-            self.client_version_payload, invalidate_cache=True)
+            self.client_version_payload)
         return validate_dict_and_return_key_value(
             blockchain_info, 'solana-core', self._logger_metadata, stringify=True)
+
+    def invalidate_cache(self):
+        """Clears the entire cache"""
+        self.https_interface.cache.clear_cache()
 
 
 class StarkwareCollector():
@@ -288,18 +294,20 @@ class StarkwareCollector():
             "id": 1
         }
 
-    @property
     def alive(self):
         """Returns true if endpoint is alive, false if not."""
         # Run cached query because we can also fetch client version from this
         # later on. This will save us an RPC call per run.
         return self.https_interface.cached_json_rpc_post(self.block_height_payload) is not None
 
-    @property
     def block_height(self):
         """Returns latest block height. Cache is cleared when total_difficulty is fetched.
         In order for this collector to work, alive and block_height calls need to be
         followed with total_difficulty and client_version calls so the cache is cleared."""
         block_height = self.https_interface.cached_json_rpc_post(
-            self.block_height_payload, invalidate_cache=True)
+            self.block_height_payload)
         return block_height
+
+    def invalidate_cache(self):
+        """Clears the entire cache"""
+        self.https_interface.cache.clear_cache()

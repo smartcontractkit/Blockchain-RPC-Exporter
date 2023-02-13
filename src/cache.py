@@ -27,3 +27,7 @@ class Cache():
         """Deletes a key from cache."""
         if self.is_cached(key):
             del self._cache[key]
+
+    def clear_cache(self):
+        """Clears the entire cache"""
+        self._cache.clear()
