@@ -66,8 +66,6 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
     def __init__(self):
         self._collector_registry = CollectorRegistry().get_collector_registry
         self._metrics_loader = MetricsLoader()
-        self._metric_names = ["alive", "disconnects", "heads_received",
-                              "block_height", "client_version", "total_difficulty"]
 
     def collect(self):
         """This method is called each time /metric is called."""
@@ -77,46 +75,52 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
         block_height_metric = self._metrics_loader.block_height_metric
         client_version_metric = self._metrics_loader.client_version_metric
         total_difficulty_metric = self._metrics_loader.total_difficulty_metric
+       
+        def _write_metric(metric, metric_value):
+            if metric_value is not None:
+                metric.add_metric(collector.labels, metric_value)
+    
+        def _write_alive(collector):
+                _write_metric(health_metric, collector.alive())
 
-        def _write_metrics(collector, futures_dict):
-            alive = futures_dict["alive"].result()
-            del futures_dict["alive"]
-            health_metric.add_metric(collector.labels, alive)
-            if alive:
-                for name_key, future in futures_dict.items():
-                    result = future.result()
-                    if result is not None:
-                        match name_key:
-                            case "disconnects":
-                                disconnects_metric.add_metric(
-                                    collector.labels, result)
-                            case "heads_received":
-                                heads_received_metric.add_metric(
-                                    collector.labels, result)
-                            case "block_height":
-                                block_height_metric.add_metric(
-                                    collector.labels, result)
-                            case "client_version":
-                                client_version_metric.add_metric(collector.labels, value={
-                                    "client_version": result})
-                            case "total_difficulty":
-                                total_difficulty_metric.add_metric(
-                                    collector.labels, result)
-            else:
-                for future in futures_dict.values():
-                    future.cancel()
-            collector.invalidate_cache()
+        def _write_disconnects(collector):
+            if hasattr(collector, 'disconnects'):
+                _write_metric(disconnects_metric, collector.disconnects())
 
-        with ThreadPoolExecutor(
-                max_workers=len(self._collector_registry) * len(self._metric_names)) as executor:
+        def _write_heads_received(collector):
+            if hasattr(collector, 'heads_received'):
+                _write_metric(heads_received_metric, collector.heads_received())
+
+        def _write_block_height(collector):
+            if hasattr(collector, 'block_height'):
+                _write_metric(block_height_metric, collector.block_height())
+
+        def _write_client_version(collector):
+            if hasattr(collector, 'client_version'):
+                _write_metric(client_version_metric, collector.client_version())
+
+        def _write_total_difficulty(collector):
+            if hasattr(collector, 'total_difficulty'):
+                _write_metric(total_difficulty_metric, collector.total_difficulty())
+        
+        # Make sure that multiplier is always number of metrics implemented.
+        multiplier = 6
+
+        with ThreadPoolExecutor(        
+                max_workers=len(self._collector_registry)*multiplier) as executor:
             for collector in self._collector_registry:
-                futures_dict = {}
-                for metric_name in self._metric_names:
-                    metric_call = getattr(collector, metric_name, None)
-                    if metric_call is not None:
-                        futures_dict[metric_name] = executor.submit(
-                            metric_call)
-                executor.submit(_write_metrics, collector, futures_dict)
+                #TODO: Make this work.
+                collector.interface.cache.clear_cache()
+                executor.submit(_write_alive, collector)
+                executor.submit(_write_disconnects, collector)
+                executor.submit(_write_heads_received, collector)
+                executor.submit(_write_block_height, collector)
+                executor.submit(_write_client_version, collector)
+                executor.submit(_write_total_difficulty, collector)
+                
+                
+
+                
 
         yield health_metric
         yield heads_received_metric
