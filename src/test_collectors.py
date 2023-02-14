@@ -43,16 +43,16 @@ class TestEvmCollector(TestCase):
     def test_alive_is_true(self):
         """Tests the alive function returns true when websocket.healthy is true"""
         self.mocked_websocket.return_value.healthy = True
-        self.assertTrue(self.evm_collector.alive)
+        self.assertTrue(self.evm_collector.alive())
 
     def test_alive_is_false(self):
         """Tests the alive function returns false when websocket.healthy is false"""
         self.mocked_websocket.return_value.healthy = False
-        self.assertFalse(self.evm_collector.alive)
+        self.assertFalse(self.evm_collector.alive())
 
     def test_block_height(self):
         """Tests the block_height function uses the correct call and args to get block height"""
-        self.evm_collector.block_height  # pylint: disable=pointless-statement
+        self.evm_collector.block_height()
         self.mocked_websocket.return_value.get_message_property_to_hex.assert_called_once_with(
             'number')
 
@@ -64,9 +64,14 @@ class TestEvmCollector(TestCase):
             "params": [],
             "id": self.chain_id
         }
-        self.evm_collector.client_version  # pylint: disable=pointless-statement
+        self.evm_collector.client_version()
         self.mocked_websocket.return_value.cached_query.assert_called_once_with(
             payload)
+
+    def test_invalidate_cache(self):
+        """Tests that the invalidate_cache method calls clear_cache method in cache attribute"""
+        self.evm_collector.invalidate_cache()
+        self.mocked_websocket.return_value.cache.clear_cache.assert_called_once_with()
 
 
 class TestConfluxCollector(TestCase):
@@ -108,16 +113,16 @@ class TestConfluxCollector(TestCase):
     def test_alive_is_true(self):
         """Tests the alive function returns true when websocket.healthy is true"""
         self.mocked_websocket.return_value.healthy = True
-        self.assertTrue(self.conflux_collector.alive)
+        self.assertTrue(self.conflux_collector.alive())
 
     def test_alive_is_false(self):
         """Tests the alive function returns false when websocket.healthy is false"""
         self.mocked_websocket.return_value.healthy = False
-        self.assertFalse(self.conflux_collector.alive)
+        self.assertFalse(self.conflux_collector.alive())
 
     def test_block_height(self):
         """Tests the block_height function uses the correct call and args to get block height"""
-        self.conflux_collector.block_height  # pylint: disable=pointless-statement
+        self.conflux_collector.block_height()
         self.mocked_websocket.return_value.get_message_property_to_hex.assert_called_once_with(
             'height')
 
@@ -129,9 +134,14 @@ class TestConfluxCollector(TestCase):
             "params": [],
             "id": self.chain_id
         }
-        self.conflux_collector.client_version  # pylint: disable=pointless-statement
+        self.conflux_collector.client_version()
         self.mocked_websocket.return_value.cached_query.assert_called_once_with(
             payload)
+
+    def test_invalidate_cache(self):
+        """Tests that the invalidate_cache method calls clear_cache method in cache attribute"""
+        self.conflux_collector.invalidate_cache()
+        self.mocked_websocket.return_value.cache.clear_cache.assert_called_once_with()
 
 
 class TestCardanoCollector(TestCase):
@@ -167,21 +177,26 @@ class TestCardanoCollector(TestCase):
 
     def test_alive_call(self):
         """Tests the alive function uses the correct call and args"""
-        self.cardano_collector.alive  # pylint: disable=pointless-statement
+        self.cardano_collector.alive()
         self.mocked_websocket.return_value.cached_query.assert_called_once_with(
             self.block_height_payload, skip_checks=True)
 
     def test_alive_false(self):
         """Tests the alive function returns false when query returns None"""
         self.mocked_websocket.return_value.cached_query.return_value = None
-        result = self.cardano_collector.alive
+        result = self.cardano_collector.alive()
         self.assertFalse(result)
 
     def test_block_height(self):
         """Tests the block_height function uses the correct call and args to get block height"""
-        self.cardano_collector.block_height  # pylint: disable=pointless-statement
-        self.mocked_websocket.return_value.query.assert_called_once_with(
+        self.cardano_collector.block_height()
+        self.mocked_websocket.return_value.cached_query.assert_called_once_with(
             self.block_height_payload, skip_checks=True)
+
+    def test_invalidate_cache(self):
+        """Tests that the invalidate_cache method calls clear_cache method in cache attribute"""
+        self.cardano_collector.invalidate_cache()
+        self.mocked_websocket.return_value.cache.clear_cache.assert_called_once_with()
 
 
 class TestBitcoinCollector(TestCase):
@@ -226,19 +241,19 @@ class TestBitcoinCollector(TestCase):
 
     def test_alive_call(self):
         """Tests the alive function uses the correct call and args"""
-        self.bitcoin_collector.alive  # pylint: disable=pointless-statement
+        self.bitcoin_collector.alive()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
             self.network_info_payload)
 
     def test_alive_false(self):
         """Tests the alive function returns false when post returns None"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
-        result = self.bitcoin_collector.alive
+        result = self.bitcoin_collector.alive()
         self.assertFalse(result)
 
     def test_block_height(self):
         """Tests the block_height function uses the correct call and args to get block height"""
-        self.bitcoin_collector.block_height  # pylint: disable=pointless-statement
+        self.bitcoin_collector.block_height()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
             self.blockchain_info_payload)
 
@@ -246,73 +261,78 @@ class TestBitcoinCollector(TestCase):
         """Tests that the block height is returned with the blocks key"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
             "blocks": 5}
-        result = self.bitcoin_collector.block_height
+        result = self.bitcoin_collector.block_height()
         self.assertEqual(5, result)
 
     def test_block_height_key_error_returns_none(self):
         """Tests that the block height returns None on KeyError"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
             "dummy_key": 5}
-        result = self.bitcoin_collector.block_height
+        result = self.bitcoin_collector.block_height()
         self.assertEqual(None, result)
 
     def test_block_height_returns_none(self):
         """Tests that the block height returns None if json_rpc_post returns None"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
-        result = self.bitcoin_collector.block_height
+        result = self.bitcoin_collector.block_height()
         self.assertEqual(None, result)
 
     def test_total_difficulty(self):
         """Tests the total_difficulty function uses the correct call and args to get difficulty"""
-        self.bitcoin_collector.total_difficulty  # pylint: disable=pointless-statement
+        self.bitcoin_collector.total_difficulty()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
-            self.blockchain_info_payload, invalidate_cache=True)
+            self.blockchain_info_payload)
 
     def test_total_difficulty_get_blocks_key(self):
         """Tests that the difficulty is returned with the difficulty key"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
             "difficulty": 5}
-        result = self.bitcoin_collector.total_difficulty
+        result = self.bitcoin_collector.total_difficulty()
         self.assertEqual(5, result)
 
     def test_total_difficulty_key_error_returns_none(self):
         """Tests that the total_difficulty returns None on KeyError"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
             "dummy_key": 5}
-        result = self.bitcoin_collector.total_difficulty
+        result = self.bitcoin_collector.total_difficulty()
         self.assertEqual(None, result)
 
     def test_total_difficulty_returns_none(self):
         """Tests that the total_difficulty returns None if json_rpc_post returns None"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
-        result = self.bitcoin_collector.total_difficulty
+        result = self.bitcoin_collector.total_difficulty()
         self.assertEqual(None, result)
 
     def test_client_version(self):
         """Tests the client_version function uses the correct call and args to get client version"""
-        self.bitcoin_collector.client_version  # pylint: disable=pointless-statement
+        self.bitcoin_collector.client_version()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
-            self.network_info_payload, invalidate_cache=True)
+            self.network_info_payload)
 
     def test_client_version_get_blocks_key(self):
         """Tests that the client version is returned as a string with the version key"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
             "version": 5}
-        result = self.bitcoin_collector.client_version
+        result = self.bitcoin_collector.client_version()
         self.assertEqual('5', result)
 
     def test_client_version_key_error_returns_none(self):
         """Tests that the client_version returns None on KeyError"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
             "dummy_key": 5}
-        result = self.bitcoin_collector.client_version
+        result = self.bitcoin_collector.client_version()
         self.assertEqual(None, result)
 
     def test_client_version_returns_none(self):
         """Tests that the client_version returns None if json_rpc_post returns None"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
-        result = self.bitcoin_collector.client_version
+        result = self.bitcoin_collector.client_version()
         self.assertEqual(None, result)
+
+    def test_invalidate_cache(self):
+        """Tests that the invalidate_cache method calls clear_cache method in cache attribute"""
+        self.bitcoin_collector.invalidate_cache()
+        self.mocked_connection.return_value.cache.clear_cache.assert_called_once_with()
 
 
 class TestFilecoinCollector(TestCase):
@@ -356,19 +376,19 @@ class TestFilecoinCollector(TestCase):
 
     def test_alive_call(self):
         """Tests the alive function uses the correct call and args"""
-        self.filecoin_collector.alive  # pylint: disable=pointless-statement
+        self.filecoin_collector.alive()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
             self.client_version_payload)
 
     def test_alive_false(self):
         """Tests the alive function returns false when post returns None"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
-        result = self.filecoin_collector.alive
+        result = self.filecoin_collector.alive()
         self.assertFalse(result)
 
     def test_block_height(self):
         """Tests the block_height function uses the correct call and args to get block height"""
-        self.filecoin_collector.block_height  # pylint: disable=pointless-statement
+        self.filecoin_collector.block_height()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
             self.block_height_payload)
 
@@ -376,47 +396,52 @@ class TestFilecoinCollector(TestCase):
         """Tests that the block height is returned with the Height key"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
             "Height": 5}
-        result = self.filecoin_collector.block_height
+        result = self.filecoin_collector.block_height()
         self.assertEqual(5, result)
 
     def test_block_height_key_error_returns_none(self):
         """Tests that the block height returns None on KeyError"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
             "dummy_key": 5}
-        result = self.filecoin_collector.block_height
+        result = self.filecoin_collector.block_height()
         self.assertEqual(None, result)
 
     def test_block_height_returns_none(self):
         """Tests that the block height returns None if json_rpc_post returns None"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
-        result = self.filecoin_collector.block_height
+        result = self.filecoin_collector.block_height()
         self.assertEqual(None, result)
 
     def test_client_version(self):
         """Tests the client_version function uses the correct call and args to get client version"""
-        self.filecoin_collector.client_version  # pylint: disable=pointless-statement
+        self.filecoin_collector.client_version()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
-            self.client_version_payload, invalidate_cache=True)
+            self.client_version_payload)
 
     def test_client_version_get_blocks_key(self):
         """Tests that the client version is returned as a string with the version key"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
             "Version": 5}
-        result = self.filecoin_collector.client_version
+        result = self.filecoin_collector.client_version()
         self.assertEqual('5', result)
 
     def test_client_version_key_error_returns_none(self):
         """Tests that the client_version returns None on KeyError"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
             "dummy_key": 5}
-        result = self.filecoin_collector.client_version
+        result = self.filecoin_collector.client_version()
         self.assertEqual(None, result)
 
     def test_client_version_returns_none(self):
         """Tests that the client_version returns None if json_rpc_post returns None"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
-        result = self.filecoin_collector.client_version
+        result = self.filecoin_collector.client_version()
         self.assertEqual(None, result)
+
+    def test_invalidate_cache(self):
+        """Tests that the invalidate_cache method calls clear_cache method in cache attribute"""
+        self.filecoin_collector.invalidate_cache()
+        self.mocked_connection.return_value.cache.clear_cache.assert_called_once_with()
 
 
 class TestSolanaCollector(TestCase):
@@ -460,53 +485,58 @@ class TestSolanaCollector(TestCase):
 
     def test_alive_call(self):
         """Tests the alive function uses the correct call and args"""
-        self.solana_collector.alive  # pylint: disable=pointless-statement
+        self.solana_collector.alive()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
             self.client_version_payload)
 
     def test_alive_false(self):
         """Tests the alive function returns false when post returns None"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
-        result = self.solana_collector.alive
+        result = self.solana_collector.alive()
         self.assertFalse(result)
 
     def test_block_height(self):
         """Tests the block_height function uses the correct call and args to get block height"""
-        self.solana_collector.block_height  # pylint: disable=pointless-statement
+        self.solana_collector.block_height()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
             self.block_height_payload)
 
     def test_block_height_returns_none(self):
         """Tests that the block height returns None if json_rpc_post returns None"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
-        result = self.solana_collector.block_height
+        result = self.solana_collector.block_height()
         self.assertEqual(None, result)
 
     def test_client_version(self):
         """Tests the client_version function uses the correct call and args to get client version"""
-        self.solana_collector.client_version  # pylint: disable=pointless-statement
+        self.solana_collector.client_version()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
-            self.client_version_payload, invalidate_cache=True)
+            self.client_version_payload)
 
     def test_client_version_get_blocks_key(self):
         """Tests that the client version is returned as a string with the solana-core key"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
             "solana-core": 5}
-        result = self.solana_collector.client_version
+        result = self.solana_collector.client_version()
         self.assertEqual('5', result)
 
     def test_client_version_key_error_returns_none(self):
         """Tests that the client_version returns None on KeyError"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
             "dummy_key": 5}
-        result = self.solana_collector.client_version
+        result = self.solana_collector.client_version()
         self.assertEqual(None, result)
 
     def test_client_version_returns_none(self):
         """Tests that the client_version returns None if json_rpc_post returns None"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
-        result = self.solana_collector.client_version
+        result = self.solana_collector.client_version()
         self.assertEqual(None, result)
+
+    def test_invalidate_cache(self):
+        """Tests that the invalidate_cache method calls clear_cache method in cache attribute"""
+        self.solana_collector.invalidate_cache()
+        self.mocked_connection.return_value.cache.clear_cache.assert_called_once_with()
 
 
 class TestStarkwareCollector(TestCase):
@@ -537,24 +567,29 @@ class TestStarkwareCollector(TestCase):
 
     def test_alive_call(self):
         """Tests the alive function uses the correct call and args"""
-        self.starkware_collector.alive  # pylint: disable=pointless-statement
+        self.starkware_collector.alive()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
             self.block_height_payload)
 
     def test_alive_false(self):
         """Tests the alive function returns false when post returns None"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
-        result = self.starkware_collector.alive
+        result = self.starkware_collector.alive()
         self.assertFalse(result)
 
     def test_block_height(self):
         """Tests the block_height function uses the correct call and args to get block height"""
-        self.starkware_collector.block_height  # pylint: disable=pointless-statement
+        self.starkware_collector.block_height()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
-            self.block_height_payload, invalidate_cache=True)
+            self.block_height_payload)
 
     def test_block_height_returns_none(self):
         """Tests that the block height returns None if json_rpc_post returns None"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
-        result = self.starkware_collector.block_height
+        result = self.starkware_collector.block_height()
         self.assertEqual(None, result)
+
+    def test_invalidate_cache(self):
+        """Tests that the invalidate_cache method calls clear_cache method in cache attribute"""
+        self.starkware_collector.invalidate_cache()
+        self.mocked_connection.return_value.cache.clear_cache.assert_called_once_with()

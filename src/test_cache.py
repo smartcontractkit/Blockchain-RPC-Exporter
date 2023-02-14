@@ -1,5 +1,5 @@
 """Test module for cache"""
-#pylint: disable=protected-access
+# pylint: disable=protected-access
 from unittest import TestCase
 from cache import Cache
 
@@ -39,3 +39,9 @@ class TestCache(TestCase):
         self.cache.store_key_value("key", "value")
         self.assertTrue(self.cache.is_cached("key"))
         self.assertFalse(self.cache.is_cached("wrongkey"))
+
+    def test_clear_cache(self):
+        """Tests that the cache attribute is cleared when the clear_cache method is called"""
+        self.cache._cache["dummy"] = "data"
+        self.cache.clear_cache()
+        self.assertTrue(len(self.cache._cache) == 0)

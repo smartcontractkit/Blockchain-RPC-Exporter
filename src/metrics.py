@@ -66,12 +66,11 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
     def __init__(self):
         self._collector_registry = CollectorRegistry().get_collector_registry
         self._metrics_loader = MetricsLoader()
+        self._metric_names = ["alive", "disconnects", "heads_received",
+                              "block_height", "client_version", "total_difficulty"]
 
     def collect(self):
         """This method is called each time /metric is called."""
-
-        metric_names = ["alive", "disconnects", "heads_received",
-                        "block_height", "client_version", "total_difficulty"]
         health_metric = self._metrics_loader.health_metric
         heads_received_metric = self._metrics_loader.heads_received_metric
         disconnects_metric = self._metrics_loader.disconnects_metric
@@ -109,10 +108,10 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
             collector.invalidate_cache()
 
         with ThreadPoolExecutor(
-                max_workers=len(self._collector_registry) * len(metric_names)) as executor:
+                max_workers=len(self._collector_registry) * len(self._metric_names)) as executor:
             for collector in self._collector_registry:
                 futures_dict = {}
-                for metric_name in metric_names:
+                for metric_name in self._metric_names:
                     metric_call = getattr(collector, metric_name, None)
                     if metric_call is not None:
                         futures_dict[metric_name] = executor.submit(

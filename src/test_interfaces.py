@@ -191,14 +191,6 @@ class TestWebSocketInterface(IsolatedAsyncioTestCase):
             result = self.web_sock_interface.cached_query('key')
             self.assertEqual('value', result)
 
-    def test_cache_query_invalidate_cache(self):
-        """Tests that the cache is invalidated"""
-        with mock.patch('interfaces.Cache', autospec=True) as mocked_cache:
-            mocked_cache.is_cached.return_value = True
-            self.web_sock_interface.cache = mocked_cache
-            self.web_sock_interface.cached_query('key', False, True)
-            mocked_cache.remove_key_from_cache.assert_called_once_with('key')
-
     def test_cache_query_retrieve_invalid_key(self):
         """Tests that the query method is called for a key not in the cache"""
         with mock.patch('interfaces.WebsocketInterface.query') as mocked_query:
