@@ -109,10 +109,10 @@ class TestPrometheusCustomCollector(TestCase):
 
     def setUp(self):
         with (
-            mock.patch("metrics.CollectorRegistry.get_collector_registry",
-                       new_callable=mock.PropertyMock(return_value=[mock.Mock()])) as mocked_registry,
+            mock.patch("metrics.CollectorRegistry") as mocked_registry,
             mock.patch("metrics.MetricsLoader") as mocked_loader
         ):
+            mocked_registry.return_value.get_collector_registry = [mock.Mock()]
             self.prom_collector = PrometheusCustomCollector()
             self.mocked_registry = mocked_registry
             self.mocked_loader = mocked_loader
