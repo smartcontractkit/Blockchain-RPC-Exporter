@@ -10,7 +10,7 @@ FROM base AS test
 COPY requirements-dev.txt .
 RUN pip install --no-cache-dir -r requirements-dev.txt
 
-COPY src/*.py .
+COPY src/*.py ./
 COPY src/tests tests
 
 RUN coverage run --branch -m pytest
@@ -19,7 +19,7 @@ RUN coverage report --fail-under 90
 
 FROM base AS prod
 
-COPY src/*.py .
+COPY src/*.py ./
 
 RUN useradd -r -s /sbin/nologin nonroot
 USER nonroot
