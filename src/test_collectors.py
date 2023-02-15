@@ -28,6 +28,11 @@ class TestEvmCollector(TestCase):
         self.mocked_websocket.assert_called_once_with(
             self.url, self.sub_payload, **self.client_params)
 
+    def test_interface_attribute_exists(self):
+        """Tests that the interface attribute exists.
+        May be used by external calls to access objects such as the interface cache"""
+        self.assertTrue(hasattr(self.evm_collector, 'interface'))
+
     def test_websocket_attr_daemon_is_bool(self):
         """Tests that the daemon attribute is of type bool"""
         self.assertEqual(bool, type(self.mocked_websocket.return_value.daemon))
@@ -68,11 +73,6 @@ class TestEvmCollector(TestCase):
         self.mocked_websocket.return_value.cached_query.assert_called_once_with(
             payload)
 
-    def test_invalidate_cache(self):
-        """Tests that the invalidate_cache method calls clear_cache method in cache attribute"""
-        self.evm_collector.invalidate_cache()
-        self.mocked_websocket.return_value.cache.clear_cache.assert_called_once_with()
-
 
 class TestConfluxCollector(TestCase):
     """Tests the conflux collector class"""
@@ -97,6 +97,11 @@ class TestConfluxCollector(TestCase):
         """Tests that the conflux collector calls the websocket interface with the correct args"""
         self.mocked_websocket.assert_called_once_with(
             self.url, self.sub_payload, **self.client_params)
+
+    def test_interface_attribute_exists(self):
+        """Tests that the interface attribute exists.
+        May be used by external calls to access objects such as the interface cache"""
+        self.assertTrue(hasattr(self.conflux_collector, 'interface'))
 
     def test_websocket_attr_daemon_is_bool(self):
         """Tests that the daemon attribute is of type bool"""
@@ -138,11 +143,6 @@ class TestConfluxCollector(TestCase):
         self.mocked_websocket.return_value.cached_query.assert_called_once_with(
             payload)
 
-    def test_invalidate_cache(self):
-        """Tests that the invalidate_cache method calls clear_cache method in cache attribute"""
-        self.conflux_collector.invalidate_cache()
-        self.mocked_websocket.return_value.cache.clear_cache.assert_called_once_with()
-
 
 class TestCardanoCollector(TestCase):
     """Tests the cardano collector class"""
@@ -171,6 +171,11 @@ class TestCardanoCollector(TestCase):
         self.mocked_websocket.assert_called_once_with(
             self.url, **self.client_params)
 
+    def test_interface_attribute_exists(self):
+        """Tests that the interface attribute exists.
+        May be used by external calls to access objects such as the interface cache"""
+        self.assertTrue(hasattr(self.cardano_collector, 'interface'))
+
     def test_websocket_attr_daemon_is_none(self):
         """Tests that the daemon attribute is None"""
         self.assertEqual(None, self.mocked_websocket.return_value.daemon)
@@ -192,11 +197,6 @@ class TestCardanoCollector(TestCase):
         self.cardano_collector.block_height()
         self.mocked_websocket.return_value.cached_query.assert_called_once_with(
             self.block_height_payload, skip_checks=True)
-
-    def test_invalidate_cache(self):
-        """Tests that the invalidate_cache method calls clear_cache method in cache attribute"""
-        self.cardano_collector.invalidate_cache()
-        self.mocked_websocket.return_value.cache.clear_cache.assert_called_once_with()
 
 
 class TestBitcoinCollector(TestCase):
@@ -238,6 +238,11 @@ class TestBitcoinCollector(TestCase):
         """Tests that the bitcoin collector calls the https interface with the correct args"""
         self.mocked_connection.assert_called_once_with(
             self.url, self.open_timeout, self.ping_timeout)
+
+    def test_interface_attribute_exists(self):
+        """Tests that the interface attribute exists.
+        May be used by external calls to access objects such as the interface cache"""
+        self.assertTrue(hasattr(self.bitcoin_collector, 'interface'))
 
     def test_alive_call(self):
         """Tests the alive function uses the correct call and args"""
@@ -329,11 +334,6 @@ class TestBitcoinCollector(TestCase):
         result = self.bitcoin_collector.client_version()
         self.assertEqual(None, result)
 
-    def test_invalidate_cache(self):
-        """Tests that the invalidate_cache method calls clear_cache method in cache attribute"""
-        self.bitcoin_collector.invalidate_cache()
-        self.mocked_connection.return_value.cache.clear_cache.assert_called_once_with()
-
 
 class TestFilecoinCollector(TestCase):
     """Tests the filecoin collector class"""
@@ -373,6 +373,11 @@ class TestFilecoinCollector(TestCase):
         """Tests that the filecoin collector calls the https interface with the correct args"""
         self.mocked_connection.assert_called_once_with(
             self.url, self.open_timeout, self.ping_timeout)
+
+    def test_interface_attribute_exists(self):
+        """Tests that the interface attribute exists.
+        May be used by external calls to access objects such as the interface cache"""
+        self.assertTrue(hasattr(self.filecoin_collector, 'interface'))
 
     def test_alive_call(self):
         """Tests the alive function uses the correct call and args"""
@@ -438,11 +443,6 @@ class TestFilecoinCollector(TestCase):
         result = self.filecoin_collector.client_version()
         self.assertEqual(None, result)
 
-    def test_invalidate_cache(self):
-        """Tests that the invalidate_cache method calls clear_cache method in cache attribute"""
-        self.filecoin_collector.invalidate_cache()
-        self.mocked_connection.return_value.cache.clear_cache.assert_called_once_with()
-
 
 class TestSolanaCollector(TestCase):
     """Tests the solana collector class"""
@@ -482,6 +482,11 @@ class TestSolanaCollector(TestCase):
         """Tests that the solana collector calls the https interface with the correct args"""
         self.mocked_connection.assert_called_once_with(
             self.url, self.open_timeout, self.ping_timeout)
+
+    def test_interface_attribute_exists(self):
+        """Tests that the interface attribute exists.
+        May be used by external calls to access objects such as the interface cache"""
+        self.assertTrue(hasattr(self.solana_collector, 'interface'))
 
     def test_alive_call(self):
         """Tests the alive function uses the correct call and args"""
@@ -533,11 +538,6 @@ class TestSolanaCollector(TestCase):
         result = self.solana_collector.client_version()
         self.assertEqual(None, result)
 
-    def test_invalidate_cache(self):
-        """Tests that the invalidate_cache method calls clear_cache method in cache attribute"""
-        self.solana_collector.invalidate_cache()
-        self.mocked_connection.return_value.cache.clear_cache.assert_called_once_with()
-
 
 class TestStarkwareCollector(TestCase):
     """Tests the starkware collector class"""
@@ -565,6 +565,11 @@ class TestStarkwareCollector(TestCase):
         self.mocked_connection.assert_called_once_with(
             self.url, self.open_timeout, self.ping_timeout)
 
+    def test_interface_attribute_exists(self):
+        """Tests that the interface attribute exists.
+        May be used by external calls to access objects such as the interface cache"""
+        self.assertTrue(hasattr(self.starkware_collector, 'interface'))
+
     def test_alive_call(self):
         """Tests the alive function uses the correct call and args"""
         self.starkware_collector.alive()
@@ -588,8 +593,3 @@ class TestStarkwareCollector(TestCase):
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
         result = self.starkware_collector.block_height()
         self.assertEqual(None, result)
-
-    def test_invalidate_cache(self):
-        """Tests that the invalidate_cache method calls clear_cache method in cache attribute"""
-        self.starkware_collector.invalidate_cache()
-        self.mocked_connection.return_value.cache.clear_cache.assert_called_once_with()

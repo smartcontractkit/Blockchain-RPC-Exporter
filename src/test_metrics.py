@@ -1,3 +1,4 @@
+# pylint: disable=protected-access
 """Tests the metrics module"""
 from unittest import TestCase, mock
 from prometheus_client.metrics_core import GaugeMetricFamily, CounterMetricFamily, InfoMetricFamily
@@ -17,7 +18,7 @@ class TestMetricsLoader(TestCase):
     def test_labels(self):
         """Tests that the metrics labels are set with correct naming and order"""
         self.assertEqual(
-            self.labels, self.metrics_loader._labels)  # pylint: disable=protected-access
+            self.labels, self.metrics_loader._labels)
 
     def test_health_metric(self):
         """Tests the health_metric property calls GaugeMetric with the correct args"""
@@ -117,13 +118,6 @@ class TestPrometheusCustomCollector(TestCase):
             self.mocked_registry = mocked_registry
             self.mocked_loader = mocked_loader
 
-    def test_collect_metric_names(self):
-        """Tests that the collect method has the correct values in metric_names list"""
-        names = ["alive", "disconnects", "heads_received",
-                 "block_height", "client_version", "total_difficulty"]
-        self.assertEqual(
-            names, self.prom_collector._metric_names)  # pylint: disable=protected-access
-
     def test_collect_yields_correct_metrics(self):
         """Tests that the collect yields all the expected metrics"""
         expected_returns = [
@@ -142,3 +136,51 @@ class TestPrometheusCustomCollector(TestCase):
         """Tests that the collect method yields the expected number of values"""
         results = self.prom_collector.collect()
         self.assertEqual(6, len(list(results)))
+
+    def test_collect_thread_max_workers(self):
+        """Tests the max workers is correct for the collect threads"""
+        # The multiplier should always equal the number of metrics implemented.
+        multiplier = 6
+        with mock.patch('metrics.ThreadPoolExecutor') as thread_pool_mock:
+            # generator is added to a list to ensure it yields all results before assertion
+            list(self.prom_collector.collect())
+            thread_pool_mock.assert_called_once_with(max_workers=len(
+                self.prom_collector._collector_registry) * multiplier)
+
+    def test_write_metric_valid_value(self):
+        """Test that the add_metric method is called when a valid metric value is present"""
+        mocked_collector = mock.Mock()
+        mocked_metric = mock.Mock()
+        getattr(mocked_collector, 'attr').return_value = 20
+        self.prom_collector._write_metric(
+            mocked_collector, mocked_metric, 'attr')
+        mocked_metric.add_metric.assert_called_once_with(
+            mocked_collector.labels, 20)
+
+    def test_write_metric_no_value(self):
+        """Test that the add_metric method is not called when no metric value is present"""
+        mocked_collector = mock.Mock()
+        mocked_metric = mock.Mock()
+        getattr(mocked_collector, 'attr').return_value = None
+        self.prom_collector._write_metric(
+            mocked_collector, mocked_metric, 'attr')
+        mocked_metric.add_metric.assert_not_called()
+
+    def test_collect_clears_cache_for_each_collector(self):
+        """Tests that for each collector the cache is cleared"""
+        # generator is added to a list to ensure it yields all results before assertion
+        list(self.prom_collector.collect())
+        for collector in self.prom_collector._collector_registry:
+            collector.interface.cache.clear_cache.assert_called_once_with()
+
+    def test_collect_alive(self):
+        """Tests the alive metric is written using a thread for each collector"""
+        with mock.patch('metrics.ThreadPoolExecutor') as thread_pool_mock:
+            # generator is added to a list to ensure it yields all results before assertion
+            list(self.prom_collector.collect())
+            for collector in self.prom_collector._collector_registry:
+                thread_pool_mock.return_value.__enter__.return_value.submit.assert_any_call(
+                    self.prom_collector._write_metric,
+                    collector,
+                    self.mocked_loader.return_value.health_metric,
+                    'alive')
