@@ -60,12 +60,20 @@ class MetricsLoader():
             labels=self._labels)
 
 
-class PrometheusCustomCollector():  #pylint: disable=too-few-public-methods
+class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
     """https://github.com/prometheus/client_python#custom-collectors"""
 
     def __init__(self):
         self._collector_registry = CollectorRegistry().get_collector_registry
         self._metrics_loader = MetricsLoader()
+
+    def _write_metric(self, collector, metric, attribute):
+        """Gets metric from collector and writes it"""
+        if hasattr(collector, attribute):
+            metric_value = getattr(collector, attribute)()
+            print(metric_value)
+            if metric_value is not None:
+                metric.add_metric(collector.labels, metric_value)
 
     def collect(self):
         """This method is called each time /metric is called."""
@@ -76,31 +84,25 @@ class PrometheusCustomCollector():  #pylint: disable=too-few-public-methods
         client_version_metric = self._metrics_loader.client_version_metric
         total_difficulty_metric = self._metrics_loader.total_difficulty_metric
 
-        def _write_metrics(collector):
-            alive = collector.alive
-            health_metric.add_metric(collector.labels, alive)
-            if alive:
-                if hasattr(collector, "disconnects"):
-                    disconnects_metric.add_metric(collector.labels,
-                                                  collector.disconnects)
-                if hasattr(collector, "heads_received"):
-                    heads_received_metric.add_metric(collector.labels,
-                                                     collector.heads_received)
-                if hasattr(collector, "block_height"):
-                    block_height_metric.add_metric(collector.labels,
-                                                   collector.block_height)
-                if hasattr(collector, "client_version"):
-                    client_version_metric.add_metric(
-                        collector.labels,
-                        value={"client_version": collector.client_version})
-                if hasattr(collector, "total_difficulty"):
-                    total_difficulty_metric.add_metric(
-                        collector.labels, collector.total_difficulty)
+        # Make sure that multiplier is always number of metrics implemented.
+        multiplier = 6
 
         with ThreadPoolExecutor(
-                max_workers=len(self._collector_registry)) as executor:
+                max_workers=len(self._collector_registry) * multiplier) as executor:
             for collector in self._collector_registry:
-                executor.submit(_write_metrics, collector)
+                collector.interface.cache.clear_cache()
+                executor.submit(self._write_metric, collector,
+                                health_metric, 'alive')
+                executor.submit(self._write_metric, collector,
+                                client_version_metric, 'client_version')
+                executor.submit(self._write_metric, collector,
+                                block_height_metric, 'block_height')
+                executor.submit(self._write_metric, collector,
+                                heads_received_metric, 'heads_received')
+                executor.submit(self._write_metric, collector,
+                                disconnects_metric, 'disconnects')
+                executor.submit(self._write_metric, collector,
+                                total_difficulty_metric, 'total_difficulty')
 
         yield health_metric
         yield heads_received_metric

@@ -2,8 +2,6 @@
 import asyncio
 import json
 import threading
-import base64
-
 from websockets.client import connect
 from websockets.exceptions import ConnectionClosed, WebSocketException
 import requests
@@ -65,7 +63,7 @@ class HttpsInterface():
                 return result
         return None
 
-    def cached_json_rpc_post(self, payload: dict, invalidate_cache=False):
+    def cached_json_rpc_post(self, payload: dict):
         """Calls json_rpc_post and stores the result in in-memory
         cache, by using payload as key.Method will always return
         cached value after the first call. Cache never expires."""
@@ -73,8 +71,6 @@ class HttpsInterface():
 
         if self.cache.is_cached(cache_key):
             return_value = self.cache.retrieve_key_value(cache_key)
-            if invalidate_cache:
-                self.cache.remove_key_from_cache(cache_key)
             return return_value
 
         value = self.json_rpc_post(payload)
@@ -198,15 +194,13 @@ class WebsocketInterface(WebsocketSubscription):  # pylint: disable=too-many-ins
         """Asyncio handler for _query method."""
         return asyncio.run(self._query(payload, skip_checks))
 
-    def cached_query(self, payload, skip_checks=False, invalidate_cache=False):
+    def cached_query(self, payload, skip_checks=False):
         """Calls json_rpc_post and stores the result in in-memory
         cache, by using payload as key.Method will always return
         cached value after the first call. Cache never expires."""
         cache_key = str(payload)
         if self.cache.is_cached(cache_key):
             value = self.cache.retrieve_key_value(cache_key)
-            if invalidate_cache:
-                self.cache.remove_key_from_cache(cache_key)
             return value
 
         value = self.query(payload, skip_checks)
