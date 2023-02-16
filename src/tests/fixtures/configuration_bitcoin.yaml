@@ -1,4 +1,4 @@
-blockchain: "bitcoin"
+blockchain: "Bitcoin"
 chain_id: 1234
 network_name: "TestNetwork"
 network_type: "Mainnet"

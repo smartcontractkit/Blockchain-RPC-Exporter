@@ -31,13 +31,13 @@ class EndpointRegistry(Config):
 
     @property
     def blockchain(self):
-        """Returns blockchain."""
-        return self.get_property('blockchain')
+        """Returns blockchain as a lowercase string."""
+        return self.get_property('blockchain').lower()
 
     @property
     def collector(self):
-        """Returns type of collector used."""
-        return self.get_property('collector')
+        """Returns type of collector used as a lowercase string."""
+        return self.get_property('collector').lower()
 
     @property
     def get_endpoint_registry(self) -> list:
@@ -47,7 +47,7 @@ class EndpointRegistry(Config):
         for item in self.endpoints:
             endpoints_list.append(
                 Endpoint(item['url'], item['provider'],
-                         self.get_property('blockchain'),
+                         self.blockchain,
                          self.get_property('network_name'),
                          self.get_property('network_type'),
                          self.get_property('chain_id'),
