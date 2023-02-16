@@ -71,7 +71,6 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
         """Gets metric from collector and writes it"""
         if hasattr(collector, attribute):
             metric_value = getattr(collector, attribute)()
-            print(metric_value)
             if metric_value is not None:
                 metric.add_metric(collector.labels, metric_value)
 
