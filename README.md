@@ -32,6 +32,7 @@ pip3 install virtualenv
 virtualenv venv
 source venv/bin/activate
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 1. Generate valid exporter config and validation file. For example see [config example](config/exporter_example/config.yml) and [validation example](config/exporter_example/validation.yml).
 2. Export paths of generated configuration files relative to `src/exporter.py`:
@@ -57,4 +58,31 @@ docker-compose up
 curl localhost:8000/metrics # Exporter
 curl localhost:3000         # Grafana
 curl localhost:9090         # Prometheus
+```
+
+### Testing
+Testing is performed using [pytest](https://docs.pytest.org/) run by [coverage.py](https://coverage.readthedocs.io/) to generate test coverage reporting.
+[pylint](https://pylint.readthedocs.io/) is used to lint the pyhton code.
+These dependencies can be found in the [requirements-dev.txt](requirements-dev.txt) file. Unit testing and linting is performed on every commit push to the repository. 90% test coverage and no linter errors/warnings are a requirement for the tests to pass.
+
+#### Testing Locally (venv)
+Tests can be run locally in the virtual environment.
+1. Run the unit tests with coverage.py from within the `src` directory.
+```bash
+coverage run --branch -m pytest
+```
+2. Generate the coverage report. To view the report open the generated `index.html` file in a browser.
+```bash
+coverage html
+```
+3. Run the linter to find any errors/warnings.
+```bash
+pylint src/*py
+```
+
+#### Testing Locally (docker)
+The tests and linter can be run using docker by building the `test` docker stage.
+1. Build the `test` stage in the `Dockerfile`.
+```bash
+docker build --target test .
 ```
