@@ -5,7 +5,6 @@ from unittest import TestCase, IsolatedAsyncioTestCase, mock
 from structlog.testing import capture_logs
 import requests
 import requests_mock
-from asyncio.exceptions import TimeoutError
 
 from interfaces import HttpsInterface, WebsocketSubscription, WebsocketInterface
 from cache import Cache
@@ -22,18 +21,23 @@ class TestConfiguration(TestCase):
         self.interface = HttpsInterface(self.url, 1, 2)
 
     def test_url_attribute(self):
+        """Tests url attribute is set as expected"""
         self.assertEqual(self.url, self.interface.url)
 
     def test_connect_timeout_attribute(self):
+        """Tests connect_timeout attribute is set as expected"""
         self.assertEqual(1, self.interface.connect_timeout)
 
     def test_response_timeout_attribute(self):
+        """Tests response_timeout attribute is set as expected"""
         self.assertEqual(2, self.interface.response_timeout)
 
     def test_session_attribute(self):
+        """Tests session attribute is set as expected"""
         self.assertEqual(type(self.interface.session), requests.Session)
 
     def test_logger_attribute(self):
+        """Tests logger attribute is setup as expected"""
         self.assertEqual(self.interface._logger, logger)
 
     def test_logger_metadata(self):
@@ -43,9 +47,11 @@ class TestConfiguration(TestCase):
         self.assertEqual(self.interface._logger_metadata, expected_metadata)
 
     def test_cache_attribute(self):
+        """Tests cache attribute is set as expected"""
         self.assertEqual(type(self.interface.cache), Cache)
 
     def test_return_and_validate_post_request_method_200(self):
+        """Tests the post request method is called once and returns Ok for 200 status code"""
         with requests_mock.Mocker(session=self.interface.session) as m:
             m.post(self.url, text="Ok", status_code=200)
             payload = {
@@ -59,6 +65,7 @@ class TestConfiguration(TestCase):
             self.assertEqual(m.call_count, 1)
 
     def test_return_and_validate_post_request_method_non_200(self):
+        """Tests the post request method is called once and returns None for 500 status code"""
         with requests_mock.Mocker(session=self.interface.session) as m:
             m.post(self.url, text="Ok", status_code=500)
             payload = {
@@ -131,7 +138,7 @@ class TestWebSocketInterface(IsolatedAsyncioTestCase):
         with capture_logs() as captured:
             self.web_sock_interface._load_and_validate_json_key(
                 message, key)
-        self.assertTrue(any([log['log_level'] == "error" for log in captured]))
+        self.assertTrue(any(log['log_level'] == "error" for log in captured))
 
     def test_load_and_validate_json_key_valid_json_no_error_log(self):
         """Tests that no error is logged when the json message does contain the specified key"""
@@ -141,7 +148,7 @@ class TestWebSocketInterface(IsolatedAsyncioTestCase):
             self.web_sock_interface._load_and_validate_json_key(
                 message, key)
         self.assertFalse(
-            any([log['log_level'] == "error" for log in captured]))
+            any(log['log_level'] == "error" for log in captured))
 
     def test_query_call(self):
         """Tests that the query function calls the _query function with correct args"""
