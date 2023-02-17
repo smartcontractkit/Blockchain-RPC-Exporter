@@ -9,6 +9,7 @@ class EvmCollector():
     def __init__(self, url, labels, chain_id, **client_parameters):
         self.labels = labels
         self.chain_id = chain_id
+        self.last_call_latency = None
 
         sub_payload = {
             "method": 'eth_subscribe',
@@ -32,6 +33,11 @@ class EvmCollector():
     def heads_received(self):
         """Returns amount of received messages from the subscription."""
         return self.interface.heads_received
+    
+    def latency(self):
+        """Returns connection latency."""
+        return self.interface.subscription_latency
+
 
     def client_version(self):
         """Runs a cached query to return client version."""
@@ -73,7 +79,11 @@ class ConfluxCollector():
     def heads_received(self):
         """Returns amount of received messages from the subscription."""
         return self.interface.heads_received
-        
+
+    def latency(self):
+        """Returns connection latency."""
+        return self.interface.subscription_latency
+
     def client_version(self):
         """Runs a cached query to return client version."""
         payload = {

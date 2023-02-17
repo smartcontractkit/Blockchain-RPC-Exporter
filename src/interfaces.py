@@ -11,6 +11,7 @@ from helpers import strip_url, return_and_validate_rpc_json_result
 from cache import Cache
 from log import logger
 
+from datetime import datetime
 
 class HttpsInterface():
     """A https interface, to interact with https RPC endpoints."""
@@ -96,8 +97,10 @@ class WebsocketSubscription(threading.Thread):  # pylint: disable=too-many-insta
         }
         self.healthy = False
         self.disconnects = 0
+        self.subscription_latency = 0
         self.heads_received = 0
         self._latest_message = None
+        self.timestamp = datetime.now()
 
     def run(self):
         asyncio.run(self._subscribe(self._sub_payload))
@@ -138,10 +141,15 @@ class WebsocketSubscription(threading.Thread):  # pylint: disable=too-many-insta
                 return None
         else:
             return None
+    
+    async def _record_latency(self, websocket):
+        if (datetime.now() - self.timestamp).total_seconds() > 10:
+            self.timestamp = datetime.now()
+            self.subscription_latency = websocket.latency
 
     async def _process_message(self, websocket):
         async for msg in websocket:
-            self.healthy = True
+            await self._record_latency(websocket)
             if msg is not None:
                 try:
                     if 'params' in json.loads(msg):
@@ -160,11 +168,13 @@ class WebsocketSubscription(threading.Thread):  # pylint: disable=too-many-insta
                           payload=payload,
                           **self._logger_metadata)
         async for websocket in connect(self._url, **self._client_parameters):
+            websocket.latency
             try:
                 # When we establish connection, we mark the endpoint alive.
                 self.healthy = True
                 await websocket.send(json.dumps(payload))
                 await self._process_message(websocket)
+
             except ConnectionClosed:
                 self._logger.error(
                     "Websocket connection lost, reconnecting...",
@@ -193,7 +203,7 @@ class WebsocketInterface(WebsocketSubscription):  # pylint: disable=too-many-ins
     def query(self, payload, skip_checks=False):
         """Asyncio handler for _query method."""
         return asyncio.run(self._query(payload, skip_checks))
-
+    
     def cached_query(self, payload, skip_checks=False):
         """Calls json_rpc_post and stores the result in in-memory
         cache, by using payload as key.Method will always return
