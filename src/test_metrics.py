@@ -12,7 +12,7 @@ class TestMetricsLoader(TestCase):
     def setUp(self):
         self.metrics_loader = MetricsLoader()
         self.labels = [
-            'url', 'provider', 'blockchain', 'network_name', 'network_type', 'chain_id'
+            'url', 'provider', 'blockchain', 'network_name', 'network_type', 'evmChainID'
         ]
 
     def test_labels(self):
