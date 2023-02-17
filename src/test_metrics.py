@@ -113,7 +113,7 @@ class TestPrometheusCustomCollector(TestCase):
             mock.patch("metrics.CollectorRegistry") as mocked_registry,
             mock.patch("metrics.MetricsLoader") as mocked_loader
         ):
-            mocked_registry.return_value.get_collector_registry = [mock.Mock()]
+            mocked_registry.return_value.get_collector_registry = [mock.Mock(), mock.Mock()]
             self.prom_collector = PrometheusCustomCollector()
             self.mocked_registry = mocked_registry
             self.mocked_loader = mocked_loader
@@ -132,20 +132,24 @@ class TestPrometheusCustomCollector(TestCase):
         for result in results:
             self.assertTrue(result in expected_returns)
 
+
     def test_collect_number_of_yields(self):
         """Tests that the collect method yields the expected number of values"""
         results = self.prom_collector.collect()
         self.assertEqual(6, len(list(results)))
 
+    def test_get_thread_count(self):
+        thread_count = self.prom_collector.get_thread_count()
+        # Total of 6 metrics times two items in our mocked pool should give 12
+        self.assertEqual(thread_count, 12)
+    
     def test_collect_thread_max_workers(self):
         """Tests the max workers is correct for the collect threads"""
-        # The multiplier should always equal the number of metrics implemented.
-        multiplier = 6
         with mock.patch('metrics.ThreadPoolExecutor') as thread_pool_mock:
             # generator is added to a list to ensure it yields all results before assertion
             list(self.prom_collector.collect())
-            thread_pool_mock.assert_called_once_with(max_workers=len(
-                self.prom_collector._collector_registry) * multiplier)
+            # Threadpoolexecutor should be called with get_thread_count result.
+            thread_pool_mock.assert_called_once_with(max_workers=12)
 
     def test_write_metric_valid_value(self):
         """Test that the add_metric method is called when a valid metric value is present"""

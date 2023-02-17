@@ -59,7 +59,6 @@ class MetricsLoader():
             'Total canonical chain difficulty observed from the first to the latest block.',
             labels=self._labels)
 
-
 class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
     """https://github.com/prometheus/client_python#custom-collectors"""
 
@@ -73,6 +72,11 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
             metric_value = getattr(collector, attribute)()
             if metric_value is not None:
                 metric.add_metric(collector.labels, metric_value)
+    
+    def get_thread_count(self)-> int:
+        size_of_pool = len(self._collector_registry)
+        number_of_metrics = len([attr for attr in MetricsLoader.__dict__.values() if isinstance(attr, property)])
+        return size_of_pool * number_of_metrics
 
     def collect(self):
         """This method is called each time /metric is called."""
@@ -83,11 +87,8 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
         client_version_metric = self._metrics_loader.client_version_metric
         total_difficulty_metric = self._metrics_loader.total_difficulty_metric
 
-        # Make sure that multiplier is always number of metrics implemented.
-        multiplier = 6
-
         with ThreadPoolExecutor(
-                max_workers=len(self._collector_registry) * multiplier) as executor:
+                max_workers=self.get_thread_count()) as executor:
             for collector in self._collector_registry:
                 collector.interface.cache.clear_cache()
                 executor.submit(self._write_metric, collector,

@@ -28,6 +28,10 @@ class EvmCollector():
     def block_height(self):
         """Returns latest block height."""
         return self.interface.get_message_property_to_hex('number')
+    
+    def heads_received(self):
+        """Returns amount of received messages from the subscription."""
+        return self.interface.heads_received
 
     def client_version(self):
         """Runs a cached query to return client version."""
@@ -66,6 +70,10 @@ class ConfluxCollector():
         """Returns latest block height."""
         return self.interface.get_message_property_to_hex('height')
 
+    def heads_received(self):
+        """Returns amount of received messages from the subscription."""
+        return self.interface.heads_received
+        
     def client_version(self):
         """Runs a cached query to return client version."""
         payload = {
