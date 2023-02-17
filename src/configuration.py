@@ -68,7 +68,7 @@ class Config():
             },
             'endpoints': [{
                 'url':
-                And(str, Regex('https://.*|wss://.*')),
+                And(str, Regex('https://.*|wss://.*|ws://.*')),
                 'provider':
                 And(str, lambda s: s in allowed_providers)
             }]
