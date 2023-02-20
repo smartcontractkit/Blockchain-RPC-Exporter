@@ -15,7 +15,7 @@ COPY src/tests tests
 
 RUN coverage run --branch -m pytest
 RUN coverage report --fail-under 90
-
+RUN pylint *.py
 
 FROM base AS prod
 

@@ -1,3 +1,4 @@
+# pylint: disable=protected-access, too-many-instance-attributes, duplicate-code
 """Module for testing collectors"""
 from unittest import TestCase, mock
 

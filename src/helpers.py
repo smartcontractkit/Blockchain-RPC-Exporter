@@ -20,7 +20,7 @@ def return_and_validate_rpc_json_result(message: str, logger_metadata) -> dict:
     Websocket Interface."""
     try:
         parsed = parse_json(message)
-        if isinstance(parsed, Ok):
+        if isinstance(parsed, Ok):  # pylint: disable=no-else-return
             return parsed.result
         else:
             logger.error('Error in RPC message.',
