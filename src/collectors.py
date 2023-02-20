@@ -29,15 +29,14 @@ class EvmCollector():
     def block_height(self):
         """Returns latest block height."""
         return self.interface.get_message_property_to_hex('number')
-    
+
     def heads_received(self):
         """Returns amount of received messages from the subscription."""
         return self.interface.heads_received
-    
+
     def latency(self):
         """Returns connection latency."""
-        return self.interface.subscription_latency
-
+        return self.interface.subscription_ping_latency
 
     def client_version(self):
         """Runs a cached query to return client version."""
@@ -82,7 +81,7 @@ class ConfluxCollector():
 
     def latency(self):
         """Returns connection latency."""
-        return self.interface.subscription_latency
+        return self.interface.subscription_ping_latency
 
     def client_version(self):
         """Runs a cached query to return client version."""
@@ -117,11 +116,15 @@ class CardanoCollector():
     def alive(self):
         """Returns true if endpoint is alive, false if not."""
         return self.interface.cached_query(self.block_height_payload,
-                                           skip_checks=True) is not None
+                                           skip_checks=True, record_latency=True) is not None
 
     def block_height(self):
         """Returns latest block height."""
         return self.interface.cached_query(self.block_height_payload, skip_checks=True)
+
+    def latency(self):
+        """Returns connection latency."""
+        return self.interface.query_latency
 
 
 class BitcoinCollector():
@@ -153,7 +156,7 @@ class BitcoinCollector():
         """Returns true if endpoint is alive, false if not."""
         # Run cached query because we can also fetch client version from this
         # later on. This will save us an RPC call per run.
-        return self.interface.cached_json_rpc_post(self.network_info_payload) is not None
+        return self.interface.cached_json_rpc_post(self.network_info_payload, record_latency=True) is not None
 
     def block_height(self):
         """Returns latest block height. Cache is cleared when total_difficulty is fetched.
@@ -177,6 +180,10 @@ class BitcoinCollector():
             self.network_info_payload)
         return validate_dict_and_return_key_value(
             blockchain_info, 'version', self._logger_metadata, stringify=True)
+
+    def latency(self):
+        """Returns connection latency."""
+        return self.interface.query_latency
 
 
 class FilecoinCollector():
@@ -208,7 +215,7 @@ class FilecoinCollector():
         # Run cached query because we can also fetch client version from this
         # later on. This will save us an RPC call per run.
         return self.interface.cached_json_rpc_post(
-            self.client_version_payload) is not None
+            self.client_version_payload, record_latency=True) is not None
 
     def block_height(self):
         """Returns latest block height. Cache is cleared when total_difficulty is fetched.
@@ -225,6 +232,10 @@ class FilecoinCollector():
             self.client_version_payload)
         return validate_dict_and_return_key_value(
             blockchain_info, 'Version', self._logger_metadata, stringify=True)
+
+    def latency(self):
+        """Returns connection latency."""
+        return self.interface.query_latency
 
 
 class SolanaCollector():
@@ -256,7 +267,7 @@ class SolanaCollector():
         # Run cached query because we can also fetch client version from this
         # later on. This will save us an RPC call per run.
         return self.interface.cached_json_rpc_post(
-            self.client_version_payload) is not None
+            self.client_version_payload, record_latency=True) is not None
 
     def block_height(self):
         """Returns latest block height. Cache is cleared when total_difficulty is fetched.
@@ -270,6 +281,10 @@ class SolanaCollector():
             self.client_version_payload)
         return validate_dict_and_return_key_value(
             blockchain_info, 'solana-core', self._logger_metadata, stringify=True)
+
+    def latency(self):
+        """Returns connection latency."""
+        return self.interface.query_latency
 
 
 class StarkwareCollector():
@@ -292,7 +307,7 @@ class StarkwareCollector():
         """Returns true if endpoint is alive, false if not."""
         # Run cached query because we can also fetch client version from this
         # later on. This will save us an RPC call per run.
-        return self.interface.cached_json_rpc_post(self.block_height_payload) is not None
+        return self.interface.cached_json_rpc_post(self.block_height_payload, record_latency=True) is not None
 
     def block_height(self):
         """Returns latest block height. Cache is cleared when total_difficulty is fetched.
@@ -301,3 +316,7 @@ class StarkwareCollector():
         block_height = self.interface.cached_json_rpc_post(
             self.block_height_payload)
         return block_height
+
+    def latency(self):
+        """Returns connection latency."""
+        return self.interface.query_latency
