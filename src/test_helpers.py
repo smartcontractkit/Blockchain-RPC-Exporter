@@ -3,7 +3,7 @@
 from unittest import TestCase
 from structlog.testing import capture_logs
 
-from helpers import strip_url, return_and_validate_rpc_json_result, validate_dict_and_return_key_value
+from helpers import strip_url, return_and_validate_rpc_json_result, validate_dict_and_return_key_value  # pylint: disable=line-too-long
 
 
 class TestHelpers(TestCase):
@@ -32,7 +32,7 @@ class TestHelpers(TestCase):
         with capture_logs() as captured:
             return_and_validate_rpc_json_result(message, self.logger_metadata)
         self.assertTrue(
-            any([log['log_level'] == "error" for log in captured]))
+            any(log['log_level'] == "error" for log in captured))
 
     def test_return_and_validate_rpc_json_result_error_log_for_invalid_rpc_json(self):
         """Tests that a KeyError causes an error log"""
@@ -40,15 +40,15 @@ class TestHelpers(TestCase):
         with capture_logs() as captured:
             return_and_validate_rpc_json_result(message, self.logger_metadata)
         self.assertTrue(
-            any([log['log_level'] == "error" for log in captured]))
+            any(log['log_level'] == "error" for log in captured))
 
     def test_return_and_validate_rpc_json_result_error_log_for_rpc_error(self):
         """Tests that if the message has an rpc error we log an error"""
-        message = '{"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": null}'
+        message = '{"jsonrpc": "2.0", "error": {"code":-32600, "message":"Invalid Request"}, "id": null}'  # pylint: disable=line-too-long
         with capture_logs() as captured:
             return_and_validate_rpc_json_result(message, self.logger_metadata)
         self.assertTrue(
-            any([log['log_level'] == "error" for log in captured]))
+            any(log['log_level'] == "error" for log in captured))
 
     def test_return_and_validate_rpc_json_result_does_not_log_error_for_valid(self):
         """Tests that for a valid rpc message no errors are logged"""
@@ -56,11 +56,11 @@ class TestHelpers(TestCase):
         with capture_logs() as captured:
             return_and_validate_rpc_json_result(message, self.logger_metadata)
         self.assertFalse(
-            any([log['log_level'] == "error" for log in captured]))
+            any(log['log_level'] == "error" for log in captured))
 
     def test_return_and_validate_rpc_json_result_return_none_for_rpc_error(self):
         """Tests that if the message has an rpc error we return None"""
-        message = '{"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": null}'
+        message = '{"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": null}'  # pylint: disable=line-too-long
         result = return_and_validate_rpc_json_result(
             message, self.logger_metadata)
         self.assertEqual(None, result)
@@ -107,7 +107,7 @@ class TestHelpers(TestCase):
             validate_dict_and_return_key_value(
                 dictionary, 'wrongkey', self.collector_logger_metadata, stringify=True)
         self.assertTrue(
-            any([log['log_level'] == "error" for log in captured]))
+            any(log['log_level'] == "error" for log in captured))
 
     def test_validate_dict_and_return_key_value_no_error_log(self):
         """Tests that no error is logged when a valid key value is found"""
@@ -116,4 +116,4 @@ class TestHelpers(TestCase):
             validate_dict_and_return_key_value(
                 dictionary, 'key', self.collector_logger_metadata, stringify=True)
         self.assertFalse(
-            any([log['log_level'] == "error" for log in captured]))
+            any(log['log_level'] == "error" for log in captured))

@@ -1,3 +1,4 @@
+"""Tests the registries module"""
 import os
 from unittest import TestCase, mock
 from structlog.testing import capture_logs
@@ -6,7 +7,7 @@ from structlog.testing import capture_logs
 from registries import Endpoint, EndpointRegistry, CollectorRegistry
 
 
-class TestEndpoint(TestCase):
+class TestEndpoint(TestCase):  # pylint: disable=too-many-instance-attributes
     """Tests the Endpoint class"""
 
     def setUp(self):
@@ -19,7 +20,8 @@ class TestEndpoint(TestCase):
         self.chain_id = 123
         self.client_params = {"dummy": "data"}
         self.endpoint = Endpoint(self.url, self.provider, self.blockchain,
-                                 self.network_name, self.network_type, self.chain_id, **self.client_params)
+                                 self.network_name, self.network_type,
+                                 self.chain_id, **self.client_params)
 
     def test_url_attribute(self):
         """Tests the url attribute is set correctly"""
@@ -143,10 +145,10 @@ class TestCollectorRegistry(TestCase):
     })
     def test_get_collector_registry_for_unsupported_chain_exit(self):
         """Tests that the program exits when loading a config file with an unsupported chain"""
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(SystemExit) as raises_context:
             self.collector_registry = CollectorRegistry()
             self.collector_registry.get_collector_registry  # pylint: disable=pointless-statement
-        self.assertEqual(1, cm.exception.code)
+        self.assertEqual(1, raises_context.exception.code)
 
     @mock.patch.dict(os.environ, {
         "CONFIG_FILE_PATH": "tests/fixtures/configuration_unsupported_blockchain.yaml",
@@ -161,7 +163,8 @@ class TestCollectorRegistry(TestCase):
         except SystemExit:
             # Catch and pass on expected SystemExit so tests keep running
             pass
-        self.assertTrue(any([log['log_level'] == "error" for log in captured]))
+        self.assertTrue(any(
+            log['log_level'] == "error" for log in captured))  # pylint: disable=duplicate-code
 
     @mock.patch.dict(os.environ, {
         "CONFIG_FILE_PATH": "tests/fixtures/configuration_bitcoin.yaml",
@@ -177,7 +180,7 @@ class TestCollectorRegistry(TestCase):
             # Catch and pass on expected SystemExit so tests keep running
             pass
         self.assertFalse(
-            any([log['log_level'] == "error" for log in captured]))
+            any(log['log_level'] == "error" for log in captured))
 
 
 def helper_test_collector_registry(test_collector_registry, mock_collector):
@@ -186,7 +189,7 @@ def helper_test_collector_registry(test_collector_registry, mock_collector):
     This function is to avoid duplicating the code for each collector type"""
     collector_list = test_collector_registry.collector_registry.get_collector_registry
     test_collector_registry.assertTrue(
-        all([isinstance(col, mock.Mock) for col in collector_list]))
+        all(isinstance(col, mock.Mock) for col in collector_list))
     calls = []
     for item in test_collector_registry.collector_registry.get_endpoint_registry:
         calls.append(mock.call(item.url, item.labels, item.chain_id,

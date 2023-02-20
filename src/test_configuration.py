@@ -110,7 +110,7 @@ class TestConfiguration(TestCase):
                 CONFIG_FILES["invalid"], VALIDATION_FILES["valid"])
         self.assertEqual(1, cm.exception.code)
 
-    def test_load_and_validate_schema_execption_error_log(self):
+    def test_load_and_validate_schema_exception_error_log(self):
         """Tests that an error is logged when loading a config file with a schema exception"""
         try:
             with capture_logs() as captured:
@@ -119,7 +119,7 @@ class TestConfiguration(TestCase):
         except SystemExit:
             # Catch and pass on expected SystemExit so tests keep running
             pass
-        self.assertTrue(any([log['log_level'] == "error" for log in captured]))
+        self.assertTrue(any(log['log_level'] == "error" for log in captured))
 
     def test_load_and_validate_no_error_log(self):
         """Tests that no error is logged when loading a valid config file"""
@@ -131,4 +131,4 @@ class TestConfiguration(TestCase):
             # Catch and pass on expected SystemExit so tests keep running
             pass
         self.assertFalse(
-            any([log['log_level'] == "error" for log in captured]))
+            any(log['log_level'] == "error" for log in captured))
