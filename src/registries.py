@@ -67,11 +67,13 @@ class CollectorRegistry(EndpointRegistry):
         for item in self.get_endpoint_registry:
             collector = None
             match self.collector, self.blockchain:
-                case "evm", "conflux":
+                case "conflux", "conflux":
                     collector = collectors.ConfluxCollector
                 case "cardano", "cardano":
                     collector = collectors.CardanoCollector
                 case "bitcoin", "bitcoin":
+                    collector = collectors.BitcoinCollector
+                case "bitcoin", "dogecoin":
                     collector = collectors.BitcoinCollector
                 case "filecoin", "filecoin":
                     collector = collectors.FilecoinCollector

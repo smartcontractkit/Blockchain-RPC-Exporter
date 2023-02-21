@@ -2,6 +2,8 @@
 import asyncio
 import json
 import threading
+from time import perf_counter
+from datetime import datetime
 from websockets.client import connect
 from websockets.exceptions import ConnectionClosed, WebSocketException
 import requests
@@ -12,7 +14,7 @@ from cache import Cache
 from log import logger
 
 
-class HttpsInterface():
+class HttpsInterface():  # pylint: disable=too-many-instance-attributes
     """A https interface, to interact with https RPC endpoints."""
 
     def __init__(self, url, connect_timeout, response_timeout):
@@ -26,6 +28,14 @@ class HttpsInterface():
             'url': strip_url(url)
         }
         self.cache = Cache()
+        self._latest_query_latency = None
+
+    @property
+    def latest_query_latency(self):
+        """Returns the last query latency in seconds and resets the value to None"""
+        latency = self._latest_query_latency
+        self._latest_query_latency = None
+        return latency
 
     def _return_and_validate_post_request(self, payload: dict) -> str:
         """Sends a POST request and validates the http response code. If
@@ -37,11 +47,13 @@ class HttpsInterface():
                 self._logger.debug("Querying endpoint.",
                                    payload=payload,
                                    **self._logger_metadata)
+                start_time = perf_counter()
                 req = ses.post(self.url,
                                json=payload,
                                timeout=Timeout(connect=self.connect_timeout,
                                                read=self.response_timeout))
                 if req.status_code == requests.codes.ok:  # pylint: disable=no-member
+                    self._latest_query_latency = perf_counter() - start_time
                     return req.text
             except (IOError, requests.HTTPError,
                     json.decoder.JSONDecodeError) as error:
@@ -96,8 +108,10 @@ class WebsocketSubscription(threading.Thread):  # pylint: disable=too-many-insta
         }
         self.healthy = False
         self.disconnects = 0
+        self.subscription_ping_latency = None
         self.heads_received = 0
         self._latest_message = None
+        self.timestamp = datetime.now()
 
     def run(self):
         asyncio.run(self._subscribe(self._sub_payload))
@@ -139,9 +153,14 @@ class WebsocketSubscription(threading.Thread):  # pylint: disable=too-many-insta
         else:
             return None
 
+    async def _record_latency(self, websocket):
+        if (datetime.now() - self.timestamp).total_seconds() > 10:
+            self.timestamp = datetime.now()
+            self.subscription_ping_latency = websocket.latency
+
     async def _process_message(self, websocket):
         async for msg in websocket:
-            self.healthy = True
+            await self._record_latency(websocket)
             if msg is not None:
                 try:
                     if 'params' in json.loads(msg):
@@ -165,6 +184,7 @@ class WebsocketSubscription(threading.Thread):  # pylint: disable=too-many-insta
                 self.healthy = True
                 await websocket.send(json.dumps(payload))
                 await self._process_message(websocket)
+
             except ConnectionClosed:
                 self._logger.error(
                     "Websocket connection lost, reconnecting...",
@@ -189,10 +209,22 @@ class WebsocketInterface(WebsocketSubscription):  # pylint: disable=too-many-ins
             'url': strip_url(url)
         }
         self.cache = Cache()
+        self._latest_query_latency = None
+
+    @property
+    def latest_query_latency(self):
+        """Returns the last query latency in seconds and resets the value to None"""
+        latency = self._latest_query_latency
+        self._latest_query_latency = None
+        return latency
 
     def query(self, payload, skip_checks=False):
         """Asyncio handler for _query method."""
-        return asyncio.run(self._query(payload, skip_checks))
+        start_time = perf_counter()
+        result = asyncio.run(self._query(payload, skip_checks))
+        if result is not None:
+            self._latest_query_latency = perf_counter() - start_time
+        return result
 
     def cached_query(self, payload, skip_checks=False):
         """Calls json_rpc_post and stores the result in in-memory

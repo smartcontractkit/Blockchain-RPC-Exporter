@@ -50,6 +50,13 @@ class TestConfiguration(TestCase):
         """Tests cache attribute is set as expected"""
         self.assertEqual(type(self.interface.cache), Cache)
 
+    def test_latest_query_latency_reset_after_get(self):
+        """Tests that the _latest_query_latency attribute is reset to None after the property is retrieved.
+        This is done to ensure a previous latency value is not accidentally retrieved"""
+        self.interface._latest_query_latency = 0.123
+        self.interface.latest_query_latency  # pylint: disable=pointless-statement
+        self.assertEqual(None, self.interface._latest_query_latency)
+
     def test_return_and_validate_post_request_method_200(self):
         """Tests the post request method is called once and returns Ok for 200 status code"""
         with requests_mock.Mocker(session=self.interface.session) as m:
@@ -221,3 +228,10 @@ class TestWebSocketInterface(IsolatedAsyncioTestCase):
             mocked_query.return_value = None
             result = self.web_sock_interface.cached_query('key', False)
             self.assertEqual(None, result)
+
+    def test_latest_query_latency_reset_after_get(self):
+        """Tests that the _latest_query_latency attribute is reset to None after the property is retrieved.
+        This is done to ensure a previous latency value is not accidentally retrieved"""
+        self.web_sock_interface._latest_query_latency = 0.123
+        self.web_sock_interface.latest_query_latency  # pylint: disable=pointless-statement
+        self.assertEqual(None, self.web_sock_interface._latest_query_latency)

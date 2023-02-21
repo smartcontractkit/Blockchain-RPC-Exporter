@@ -1,6 +1,7 @@
 """A module that does does everything Prometheus related."""
 from concurrent.futures import ThreadPoolExecutor
 from prometheus_client.metrics_core import GaugeMetricFamily, CounterMetricFamily, InfoMetricFamily
+
 from registries import CollectorRegistry
 
 
@@ -59,6 +60,23 @@ class MetricsLoader():
             'Total canonical chain difficulty observed from the first to the latest block.',
             labels=self._labels)
 
+    @property
+    def latency_metric(self):
+        """Returns instantiated latency metric."""
+        return GaugeMetricFamily(
+            'brpc_latency',
+            'Latency of the rpc connection.',
+            labels=self._labels)
+
+    @property
+    def block_height_delta_metric(self):
+        """Returns instantiated block height delta metric.
+        This metric measures the delta between block heights relative to the max block height"""
+        return GaugeMetricFamily(
+            'brpc_block_height_behind_latest',
+            'Difference between block heights relative to the max block height',
+            labels=self._labels)
+
 
 class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
     """https://github.com/prometheus/client_python#custom-collectors"""
@@ -74,6 +92,24 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
             if metric_value is not None:
                 metric.add_metric(collector.labels, metric_value)
 
+    def get_thread_count(self) -> int:
+        """Returns the required number of threads based on number of metrics and collectors"""
+        size_of_pool = len(self._collector_registry)
+        number_of_metrics = len(
+            [attr for attr in MetricsLoader.__dict__.values() if isinstance(attr, property)])
+        return size_of_pool * number_of_metrics
+
+    def delta_compared_to_max(self, source_metric, target_metric):
+        """Returns metric measuring the difference between samples in the source metric."""
+        # The second element of a sample is a dict of labels and the third element is metric values.
+        highest = 0
+        for sample in source_metric.samples:
+            if sample[2] > highest:
+                highest = sample[2]
+        for sample in source_metric.samples:
+            delta = highest - sample[2]
+            target_metric.add_metric(list(sample[1].values()), delta)
+
     def collect(self):
         """This method is called each time /metric is called."""
         health_metric = self._metrics_loader.health_metric
@@ -82,12 +118,11 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
         block_height_metric = self._metrics_loader.block_height_metric
         client_version_metric = self._metrics_loader.client_version_metric
         total_difficulty_metric = self._metrics_loader.total_difficulty_metric
-
-        # Make sure that multiplier is always number of metrics implemented.
-        multiplier = 6
+        latency_metric = self._metrics_loader.latency_metric
+        block_height_delta_metric = self._metrics_loader.block_height_delta_metric
 
         with ThreadPoolExecutor(
-                max_workers=len(self._collector_registry) * multiplier) as executor:
+                max_workers=self.get_thread_count()) as executor:
             for collector in self._collector_registry:
                 collector.interface.cache.clear_cache()
                 executor.submit(self._write_metric, collector,
@@ -102,6 +137,10 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
                                 disconnects_metric, 'disconnects')
                 executor.submit(self._write_metric, collector,
                                 total_difficulty_metric, 'total_difficulty')
+        for collector in self._collector_registry:
+            self._write_metric(collector, latency_metric, 'latency')
+        self.delta_compared_to_max(
+            block_height_metric, block_height_delta_metric)
 
         yield health_metric
         yield heads_received_metric
@@ -109,3 +148,5 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
         yield block_height_metric
         yield client_version_metric
         yield total_difficulty_metric
+        yield latency_metric
+        yield block_height_delta_metric

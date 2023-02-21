@@ -29,6 +29,14 @@ class EvmCollector():
         """Returns latest block height."""
         return self.interface.get_message_property_to_hex('number')
 
+    def heads_received(self):
+        """Returns amount of received messages from the subscription."""
+        return self.interface.heads_received
+
+    def latency(self):
+        """Returns connection latency."""
+        return self.interface.subscription_ping_latency
+
     def client_version(self):
         """Runs a cached query to return client version."""
         payload = {
@@ -65,6 +73,14 @@ class ConfluxCollector():
     def block_height(self):
         """Returns latest block height."""
         return self.interface.get_message_property_to_hex('height')
+
+    def heads_received(self):
+        """Returns amount of received messages from the subscription."""
+        return self.interface.heads_received
+
+    def latency(self):
+        """Returns connection latency."""
+        return self.interface.subscription_ping_latency
 
     def client_version(self):
         """Runs a cached query to return client version."""
@@ -104,6 +120,10 @@ class CardanoCollector():
     def block_height(self):
         """Returns latest block height."""
         return self.interface.cached_query(self.block_height_payload, skip_checks=True)
+
+    def latency(self):
+        """Returns connection latency."""
+        return self.interface.latest_query_latency
 
 
 class BitcoinCollector():
@@ -160,6 +180,10 @@ class BitcoinCollector():
         return validate_dict_and_return_key_value(
             blockchain_info, 'version', self._logger_metadata, stringify=True)
 
+    def latency(self):
+        """Returns connection latency."""
+        return self.interface.latest_query_latency
+
 
 class FilecoinCollector():
     """A collector to fetch information about filecoin RPC endpoints."""
@@ -208,6 +232,10 @@ class FilecoinCollector():
         return validate_dict_and_return_key_value(
             blockchain_info, 'Version', self._logger_metadata, stringify=True)
 
+    def latency(self):
+        """Returns connection latency."""
+        return self.interface.latest_query_latency
+
 
 class SolanaCollector():
     """A collector to fetch information about solana RPC endpoints."""
@@ -253,6 +281,10 @@ class SolanaCollector():
         return validate_dict_and_return_key_value(
             blockchain_info, 'solana-core', self._logger_metadata, stringify=True)
 
+    def latency(self):
+        """Returns connection latency."""
+        return self.interface.latest_query_latency
+
 
 class StarkwareCollector():
     """A collector to fetch information about starkware RPC endpoints."""
@@ -283,3 +315,7 @@ class StarkwareCollector():
         block_height = self.interface.cached_json_rpc_post(
             self.block_height_payload)
         return block_height
+
+    def latency(self):
+        """Returns connection latency."""
+        return self.interface.latest_query_latency
