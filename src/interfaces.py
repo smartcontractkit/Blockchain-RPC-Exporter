@@ -2,10 +2,10 @@
 import asyncio
 import json
 import threading
+from time import perf_counter
+from datetime import datetime
 from websockets.client import connect
 from websockets.exceptions import ConnectionClosed, WebSocketException
-from datetime import datetime
-from time import perf_counter
 import requests
 from urllib3 import Timeout
 
@@ -14,7 +14,7 @@ from cache import Cache
 from log import logger
 
 
-class HttpsInterface():
+class HttpsInterface():  # pylint: disable=too-many-instance-attributes
     """A https interface, to interact with https RPC endpoints."""
 
     def __init__(self, url, connect_timeout, response_timeout):
@@ -28,9 +28,16 @@ class HttpsInterface():
             'url': strip_url(url)
         }
         self.cache = Cache()
-        self.query_latency = None
+        self._latest_query_latency = None
 
-    def _return_and_validate_post_request(self, payload: dict, record_latency=False) -> str:
+    @property
+    def latest_query_latency(self):
+        """Returns the last query latency in seconds and resets the value to None"""
+        latency = self._latest_query_latency
+        self._latest_query_latency = None
+        return latency
+
+    def _return_and_validate_post_request(self, payload: dict) -> str:
         """Sends a POST request and validates the http response code. If
         response code is OK, it returns the response.text, otherwise
         it returns None.
@@ -40,17 +47,13 @@ class HttpsInterface():
                 self._logger.debug("Querying endpoint.",
                                    payload=payload,
                                    **self._logger_metadata)
-                if record_latency:
-                    self.query_latency = None
-                    start_time = perf_counter()
+                start_time = perf_counter()
                 req = ses.post(self.url,
                                json=payload,
                                timeout=Timeout(connect=self.connect_timeout,
                                                read=self.response_timeout))
                 if req.status_code == requests.codes.ok:  # pylint: disable=no-member
-                    if record_latency:
-                        self.query_latency = (
-                            perf_counter() - start_time)
+                    self._latest_query_latency = perf_counter() - start_time
                     return req.text
             except (IOError, requests.HTTPError,
                     json.decoder.JSONDecodeError) as error:
@@ -61,11 +64,10 @@ class HttpsInterface():
                 return None
             return None
 
-    def json_rpc_post(self, payload, record_latency=False):
+    def json_rpc_post(self, payload):
         """Checks the validity of a successful json-rpc response. If any of the
         validations fail, the method returns type None. """
-        response = self._return_and_validate_post_request(
-            payload, record_latency=record_latency)
+        response = self._return_and_validate_post_request(payload)
         if response is not None:
             result = return_and_validate_rpc_json_result(
                 response, self._logger_metadata)
@@ -73,17 +75,17 @@ class HttpsInterface():
                 return result
         return None
 
-    def cached_json_rpc_post(self, payload: dict, record_latency=False):
+    def cached_json_rpc_post(self, payload: dict):
         """Calls json_rpc_post and stores the result in in-memory
         cache, by using payload as key.Method will always return
         cached value after the first call. Cache never expires."""
         cache_key = str(payload)
 
-        if not record_latency and self.cache.is_cached(cache_key):
+        if self.cache.is_cached(cache_key):
             return_value = self.cache.retrieve_key_value(cache_key)
             return return_value
 
-        value = self.json_rpc_post(payload, record_latency=record_latency)
+        value = self.json_rpc_post(payload)
         if value is not None:
             self.cache.store_key_value(cache_key, value)
         return value
@@ -207,28 +209,33 @@ class WebsocketInterface(WebsocketSubscription):  # pylint: disable=too-many-ins
             'url': strip_url(url)
         }
         self.cache = Cache()
-        self.query_latency = None
+        self._latest_query_latency = None
 
-    def query(self, payload, skip_checks=False, record_latency=False):
+    @property
+    def latest_query_latency(self):
+        """Returns the last query latency in seconds and resets the value to None"""
+        latency = self._latest_query_latency
+        self._latest_query_latency = None
+        return latency
+
+    def query(self, payload, skip_checks=False):
         """Asyncio handler for _query method."""
-        if record_latency:
-            self.query_latency = None
-            start_time = perf_counter()
+        start_time = perf_counter()
         result = asyncio.run(self._query(payload, skip_checks))
-        if record_latency and result is not None:
-            self.query_latency = (perf_counter() - start_time)
+        if result is not None:
+            self._latest_query_latency = perf_counter() - start_time
         return result
 
-    def cached_query(self, payload, skip_checks=False, record_latency=False):
+    def cached_query(self, payload, skip_checks=False):
         """Calls json_rpc_post and stores the result in in-memory
         cache, by using payload as key.Method will always return
         cached value after the first call. Cache never expires."""
         cache_key = str(payload)
-        if not record_latency and self.cache.is_cached(cache_key):
+        if self.cache.is_cached(cache_key):
             value = self.cache.retrieve_key_value(cache_key)
             return value
 
-        value = self.query(payload, skip_checks, record_latency=record_latency)
+        value = self.query(payload, skip_checks)
         if value is not None:
             self.cache.store_key_value(cache_key, value)
         return value

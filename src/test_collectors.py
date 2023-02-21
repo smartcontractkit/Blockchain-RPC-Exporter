@@ -74,6 +74,11 @@ class TestEvmCollector(TestCase):
         self.mocked_websocket.return_value.cached_query.assert_called_once_with(
             payload)
 
+    def test_latency(self):
+        """Tests that the latency is obtained from the interface based on subscription ping"""
+        self.mocked_websocket.return_value.subscription_ping_latency = 0.123
+        self.assertEqual(0.123, self.evm_collector.latency())
+
 
 class TestConfluxCollector(TestCase):
     """Tests the conflux collector class"""
@@ -144,6 +149,11 @@ class TestConfluxCollector(TestCase):
         self.mocked_websocket.return_value.cached_query.assert_called_once_with(
             payload)
 
+    def test_latency(self):
+        """Tests that the latency is obtained from the interface based on subscription ping"""
+        self.mocked_websocket.return_value.subscription_ping_latency = 0.123
+        self.assertEqual(0.123, self.conflux_collector.latency())
+
 
 class TestCardanoCollector(TestCase):
     """Tests the cardano collector class"""
@@ -198,6 +208,11 @@ class TestCardanoCollector(TestCase):
         self.cardano_collector.block_height()
         self.mocked_websocket.return_value.cached_query.assert_called_once_with(
             self.block_height_payload, skip_checks=True)
+
+    def test_latency(self):
+        """Tests that the latency is obtained from the interface based on latest_query_latency"""
+        self.mocked_websocket.return_value.latest_query_latency = 0.123
+        self.assertEqual(0.123, self.cardano_collector.latency())
 
 
 class TestBitcoinCollector(TestCase):
@@ -335,6 +350,11 @@ class TestBitcoinCollector(TestCase):
         result = self.bitcoin_collector.client_version()
         self.assertEqual(None, result)
 
+    def test_latency(self):
+        """Tests that the latency is obtained from the interface based on latest_query_latency"""
+        self.mocked_connection.return_value.latest_query_latency = 0.123
+        self.assertEqual(0.123, self.bitcoin_collector.latency())
+
 
 class TestFilecoinCollector(TestCase):
     """Tests the filecoin collector class"""
@@ -444,6 +464,11 @@ class TestFilecoinCollector(TestCase):
         result = self.filecoin_collector.client_version()
         self.assertEqual(None, result)
 
+    def test_latency(self):
+        """Tests that the latency is obtained from the interface based on latest_query_latency"""
+        self.mocked_connection.return_value.latest_query_latency = 0.123
+        self.assertEqual(0.123, self.filecoin_collector.latency())
+
 
 class TestSolanaCollector(TestCase):
     """Tests the solana collector class"""
@@ -539,6 +564,11 @@ class TestSolanaCollector(TestCase):
         result = self.solana_collector.client_version()
         self.assertEqual(None, result)
 
+    def test_latency(self):
+        """Tests that the latency is obtained from the interface based on latest_query_latency"""
+        self.mocked_connection.return_value.latest_query_latency = 0.123
+        self.assertEqual(0.123, self.solana_collector.latency())
+
 
 class TestStarkwareCollector(TestCase):
     """Tests the starkware collector class"""
@@ -594,3 +624,8 @@ class TestStarkwareCollector(TestCase):
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
         result = self.starkware_collector.block_height()
         self.assertEqual(None, result)
+
+    def test_latency(self):
+        """Tests that the latency is obtained from the interface based on latest_query_latency"""
+        self.mocked_connection.return_value.latest_query_latency = 0.123
+        self.assertEqual(0.123, self.starkware_collector.latency())

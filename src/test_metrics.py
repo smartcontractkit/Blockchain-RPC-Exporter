@@ -1,6 +1,7 @@
 # pylint: disable=protected-access
 """Tests the metrics module"""
 from unittest import TestCase, mock
+from collections import namedtuple
 from prometheus_client.metrics_core import GaugeMetricFamily, CounterMetricFamily, InfoMetricFamily
 
 from metrics import MetricsLoader, PrometheusCustomCollector
@@ -104,6 +105,34 @@ class TestMetricsLoader(TestCase):
         self.assertEqual(GaugeMetricFamily, type(
             self.metrics_loader.total_difficulty_metric))
 
+    def test_latency_metric(self):
+        """Tests the latency_metric property calls GaugeMetric with the correct args"""
+        with mock.patch('metrics.GaugeMetricFamily') as gauge_mock:
+            self.metrics_loader.latency_metric  # pylint: disable=pointless-statement
+            gauge_mock.assert_called_once_with(
+                'brpc_latency',
+                'Latency of the rpc connection.',
+                labels=self.labels)
+
+    def test_latency_metric_returns_gauge(self):
+        """Tests the latency_metric property returns a gauge"""
+        self.assertEqual(GaugeMetricFamily, type(
+            self.metrics_loader.latency_metric))
+
+    def test_block_height_delta_metric(self):
+        """Tests the block_height_delta_metric property calls GaugeMetric with the correct args"""
+        with mock.patch('metrics.GaugeMetricFamily') as gauge_mock:
+            self.metrics_loader.block_height_delta_metric  # pylint: disable=pointless-statement
+            gauge_mock.assert_called_once_with(
+                'brpc_block_height_behind_latest',
+                'Difference between block heights relative to the max block height',
+                labels=self.labels)
+
+    def test_block_height_delta_metric_returns_gauge(self):
+        """Tests the block_height_delta_metric property returns a gauge"""
+        self.assertEqual(GaugeMetricFamily, type(
+            self.metrics_loader.block_height_delta_metric))
+
 
 class TestPrometheusCustomCollector(TestCase):
     """Tests the prometheus custom collector class"""
@@ -113,7 +142,8 @@ class TestPrometheusCustomCollector(TestCase):
             mock.patch("metrics.CollectorRegistry") as mocked_registry,
             mock.patch("metrics.MetricsLoader") as mocked_loader
         ):
-            mocked_registry.return_value.get_collector_registry = [mock.Mock(), mock.Mock()]
+            mocked_registry.return_value.get_collector_registry = [
+                mock.Mock(), mock.Mock()]
             self.prom_collector = PrometheusCustomCollector()
             self.mocked_registry = mocked_registry
             self.mocked_loader = mocked_loader
@@ -126,30 +156,34 @@ class TestPrometheusCustomCollector(TestCase):
             self.mocked_loader.return_value.disconnects_metric,
             self.mocked_loader.return_value.block_height_metric,
             self.mocked_loader.return_value.client_version_metric,
-            self.mocked_loader.return_value.total_difficulty_metric
+            self.mocked_loader.return_value.total_difficulty_metric,
+            self.mocked_loader.return_value.block_height_delta_metric,
+            self.mocked_loader.return_value.latency_metric
         ]
         results = self.prom_collector.collect()
         for result in results:
             self.assertTrue(result in expected_returns)
 
-
     def test_collect_number_of_yields(self):
         """Tests that the collect method yields the expected number of values"""
         results = self.prom_collector.collect()
-        self.assertEqual(6, len(list(results)))
+        self.assertEqual(8, len(list(results)))
 
     def test_get_thread_count(self):
+        """Tests get thread count returns the expected number of threads
+        based on number of metrics and collectors"""
         thread_count = self.prom_collector.get_thread_count()
-        # Total of 6 metrics times two items in our mocked pool should give 12
-        self.assertEqual(thread_count, 12)
-    
+        # Total of 8 metrics times 2 items in our mocked pool should give 16
+        self.assertEqual(16, thread_count)
+
     def test_collect_thread_max_workers(self):
         """Tests the max workers is correct for the collect threads"""
         with mock.patch('metrics.ThreadPoolExecutor') as thread_pool_mock:
             # generator is added to a list to ensure it yields all results before assertion
             list(self.prom_collector.collect())
             # Threadpoolexecutor should be called with get_thread_count result.
-            thread_pool_mock.assert_called_once_with(max_workers=12)
+            thread_count = self.prom_collector.get_thread_count()
+            thread_pool_mock.assert_called_once_with(max_workers=thread_count)
 
     def test_write_metric_valid_value(self):
         """Test that the add_metric method is called when a valid metric value is present"""
@@ -188,3 +222,23 @@ class TestPrometheusCustomCollector(TestCase):
                     collector,
                     self.mocked_loader.return_value.health_metric,
                     'alive')
+
+    def test_delta_compared_to_max(self):
+        """Tests the delta_compared_to_max method calculates the correct delta between metrics"""
+        Metric = namedtuple('Metric', ['name', 'samples'])
+        labels_one = {'url': 'test1.com', 'blockchain': 'test'}
+        labels_two = {'url': 'test2.com', 'blockchain': 'test'}
+        labels_three = {'url': 'test3.com', 'blockchain': 'test'}
+        source_metric = Metric(name="dummy metric", samples=[
+                               ['dummy sample 1', labels_one, 32],
+                               ['dummy sample 2', labels_two, 10],
+                               ['dummy sample 3', labels_three, 5]])
+        mocked_target_metric = mock.Mock()
+        expected_calls = [mock.call(list(labels_one.values()), 0),
+                          mock.call(list(labels_two.values()), 22),
+                          mock.call(list(labels_three.values()), 27)]
+
+        self.prom_collector.delta_compared_to_max(
+            source_metric, mocked_target_metric)
+        mocked_target_metric.add_metric.assert_has_calls(
+            expected_calls, any_order=True)

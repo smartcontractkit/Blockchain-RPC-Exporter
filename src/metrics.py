@@ -1,7 +1,6 @@
 """A module that does does everything Prometheus related."""
 from concurrent.futures import ThreadPoolExecutor
 from prometheus_client.metrics_core import GaugeMetricFamily, CounterMetricFamily, InfoMetricFamily
-from prometheus_client import Histogram
 
 from registries import CollectorRegistry
 
@@ -66,13 +65,16 @@ class MetricsLoader():
         """Returns instantiated latency metric."""
         return GaugeMetricFamily(
             'brpc_latency',
-            'Returns latency of the rpc connection.',
+            'Latency of the rpc connection.',
             labels=self._labels)
 
-    def universal_gauge(self, metric_name, helper_string):
-        """Returns instantiated total difficulty metric."""
+    @property
+    def block_height_delta_metric(self):
+        """Returns instantiated block height delta metric.
+        This metric measures the delta between block heights relative to the max block height"""
         return GaugeMetricFamily(
-            metric_name, helper_string,
+            'brpc_block_height_behind_latest',
+            'Difference between block heights relative to the max block height',
             labels=self._labels)
 
 
@@ -91,23 +93,22 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
                 metric.add_metric(collector.labels, metric_value)
 
     def get_thread_count(self) -> int:
+        """Returns the required number of threads based on number of metrics and collectors"""
         size_of_pool = len(self._collector_registry)
         number_of_metrics = len(
             [attr for attr in MetricsLoader.__dict__.values() if isinstance(attr, property)])
         return size_of_pool * number_of_metrics
 
-    # We know.
-    def delta_compared_to_max(self, source_metric, target_metric_name):
-        metric = self._metrics_loader.universal_gauge(
-            target_metric_name, 'This metrics finds delta for a target metric.')
+    def delta_compared_to_max(self, source_metric, target_metric):
+        """Returns metric measuring the difference between samples in the source metric."""
+        # The second element of a sample is a dict of labels and the third element is metric values.
         highest = 0
         for sample in source_metric.samples:
             if sample[2] > highest:
                 highest = sample[2]
         for sample in source_metric.samples:
             delta = highest - sample[2]
-            metric.add_metric(sample[1].values(), delta)
-        return metric
+            target_metric.add_metric(list(sample[1].values()), delta)
 
     def collect(self):
         """This method is called each time /metric is called."""
@@ -118,6 +119,7 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
         client_version_metric = self._metrics_loader.client_version_metric
         total_difficulty_metric = self._metrics_loader.total_difficulty_metric
         latency_metric = self._metrics_loader.latency_metric
+        block_height_delta_metric = self._metrics_loader.block_height_delta_metric
 
         with ThreadPoolExecutor(
                 max_workers=self.get_thread_count()) as executor:
@@ -137,8 +139,8 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
                                 total_difficulty_metric, 'total_difficulty')
         for collector in self._collector_registry:
             self._write_metric(collector, latency_metric, 'latency')
-        block_height_delta_metric = self.delta_compared_to_max(
-            block_height_metric, 'brpc_block_height_behind_latest')
+        self.delta_compared_to_max(
+            block_height_metric, block_height_delta_metric)
 
         yield health_metric
         yield heads_received_metric
@@ -146,5 +148,5 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
         yield block_height_metric
         yield client_version_metric
         yield total_difficulty_metric
-        yield block_height_delta_metric
         yield latency_metric
+        yield block_height_delta_metric
