@@ -133,6 +133,20 @@ class TestMetricsLoader(TestCase):
         self.assertEqual(GaugeMetricFamily, type(
             self.metrics_loader.block_height_delta_metric))
 
+    def test_difficulty_delta_metric(self):
+        """Tests the difficulty_delta_metric property calls GaugeMetric with the correct args"""
+        with mock.patch('metrics.GaugeMetricFamily') as gauge_mock:
+            self.metrics_loader.difficulty_delta_metric  # pylint: disable=pointless-statement
+            gauge_mock.assert_called_once_with(
+                'brpc_difficulty_behind_highest',
+                'Delta compared between highest total difficulty of the latest block in the pool.',
+                labels=self.labels)
+
+    def test_difficulty_delta_metric_returns_gauge(self):
+        """Tests the difficulty_delta_metric property returns a gauge"""
+        self.assertEqual(GaugeMetricFamily, type(
+            self.metrics_loader.difficulty_delta_metric))
+
 
 class TestPrometheusCustomCollector(TestCase):
     """Tests the prometheus custom collector class"""
@@ -157,8 +171,9 @@ class TestPrometheusCustomCollector(TestCase):
             self.mocked_loader.return_value.block_height_metric,
             self.mocked_loader.return_value.client_version_metric,
             self.mocked_loader.return_value.total_difficulty_metric,
+            self.mocked_loader.return_value.latency_metric,
             self.mocked_loader.return_value.block_height_delta_metric,
-            self.mocked_loader.return_value.latency_metric
+            self.mocked_loader.return_value.difficulty_delta_metric
         ]
         results = self.prom_collector.collect()
         for result in results:
@@ -167,14 +182,14 @@ class TestPrometheusCustomCollector(TestCase):
     def test_collect_number_of_yields(self):
         """Tests that the collect method yields the expected number of values"""
         results = self.prom_collector.collect()
-        self.assertEqual(8, len(list(results)))
+        self.assertEqual(9, len(list(results)))
 
     def test_get_thread_count(self):
         """Tests get thread count returns the expected number of threads
         based on number of metrics and collectors"""
         thread_count = self.prom_collector.get_thread_count()
-        # Total of 8 metrics times 2 items in our mocked pool should give 16
-        self.assertEqual(16, thread_count)
+        # Total of 9 metrics times 2 items in our mocked pool should give 18
+        self.assertEqual(18, thread_count)
 
     def test_collect_thread_max_workers(self):
         """Tests the max workers is correct for the collect threads"""

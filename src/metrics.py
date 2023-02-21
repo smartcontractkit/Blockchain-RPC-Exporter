@@ -77,6 +77,15 @@ class MetricsLoader():
             'Difference between block heights relative to the max block height',
             labels=self._labels)
 
+    @property
+    def difficulty_delta_metric(self):
+        """Returns difficulty delta metric.
+        This metric measures the delta between difficulty relative to the max difficulty"""
+        return GaugeMetricFamily(
+            'brpc_difficulty_behind_highest',
+            'Delta compared between highest total difficulty of the latest block in the pool.',
+            labels=self._labels)
+
 
 class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
     """https://github.com/prometheus/client_python#custom-collectors"""
@@ -120,6 +129,7 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
         total_difficulty_metric = self._metrics_loader.total_difficulty_metric
         latency_metric = self._metrics_loader.latency_metric
         block_height_delta_metric = self._metrics_loader.block_height_delta_metric
+        difficulty_delta_metric = self._metrics_loader.difficulty_delta_metric
 
         with ThreadPoolExecutor(
                 max_workers=self.get_thread_count()) as executor:
@@ -141,6 +151,8 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
             self._write_metric(collector, latency_metric, 'latency')
         self.delta_compared_to_max(
             block_height_metric, block_height_delta_metric)
+        self.delta_compared_to_max(
+            total_difficulty_metric, difficulty_delta_metric)
 
         yield health_metric
         yield heads_received_metric
@@ -150,3 +162,4 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
         yield total_difficulty_metric
         yield latency_metric
         yield block_height_delta_metric
+        yield difficulty_delta_metric
