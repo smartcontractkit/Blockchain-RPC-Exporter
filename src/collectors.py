@@ -9,7 +9,6 @@ class EvmCollector():
     def __init__(self, url, labels, chain_id, **client_parameters):
         self.labels = labels
         self.chain_id = chain_id
-        self.last_call_latency = None
 
         sub_payload = {
             "method": 'eth_subscribe',
