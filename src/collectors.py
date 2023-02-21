@@ -33,6 +33,10 @@ class EvmCollector():
         """Returns amount of received messages from the subscription."""
         return self.interface.heads_received
 
+    def disconnects(self):
+        """Returns number of disconnects on the subscription."""
+        return self.interface.disconnects
+
     def latency(self):
         """Returns connection latency."""
         return self.interface.subscription_ping_latency
@@ -77,6 +81,10 @@ class ConfluxCollector():
     def heads_received(self):
         """Returns amount of received messages from the subscription."""
         return self.interface.heads_received
+
+    def disconnects(self):
+        """Returns number of disconnects on the subscription."""
+        return self.interface.disconnects
 
     def latency(self):
         """Returns connection latency."""
