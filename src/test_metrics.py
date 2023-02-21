@@ -82,7 +82,7 @@ class TestMetricsLoader(TestCase):
         with mock.patch('metrics.InfoMetricFamily') as info_mock:
             self.metrics_loader.client_version_metric  # pylint: disable=pointless-statement
             info_mock.assert_called_once_with(
-                'brpc_client_version',
+                'brpc_client_version_info',
                 'Client version for the particular RPC endpoint.',
                 labels=self.labels)
 
@@ -124,7 +124,7 @@ class TestMetricsLoader(TestCase):
         with mock.patch('metrics.GaugeMetricFamily') as gauge_mock:
             self.metrics_loader.block_height_delta_metric  # pylint: disable=pointless-statement
             gauge_mock.assert_called_once_with(
-                'brpc_block_height_behind_latest',
+                'brpc_block_height_behind_highest',
                 'Difference between block heights relative to the max block height',
                 labels=self.labels)
 

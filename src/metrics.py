@@ -48,7 +48,7 @@ class MetricsLoader():
     def client_version_metric(self):
         """Returns instantiated client version metric."""
         return InfoMetricFamily(
-            'brpc_client_version',
+            'brpc_client_version_info',
             'Client version for the particular RPC endpoint.',
             labels=self._labels)
 
@@ -73,7 +73,7 @@ class MetricsLoader():
         """Returns instantiated block height delta metric.
         This metric measures the delta between block heights relative to the max block height"""
         return GaugeMetricFamily(
-            'brpc_block_height_behind_latest',
+            'brpc_block_height_behind_highest',
             'Difference between block heights relative to the max block height',
             labels=self._labels)
 
