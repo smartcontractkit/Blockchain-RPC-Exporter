@@ -74,6 +74,18 @@ class TestEvmCollector(TestCase):
         self.mocked_websocket.return_value.cached_query.assert_called_once_with(
             payload)
 
+    def test_client_version_return_none(self):
+        """Tests that the client_version returns None if the query returns no version"""
+        self.mocked_websocket.return_value.cached_query.return_value = None
+        result = self.evm_collector.client_version()
+        self.assertEqual(None, result)
+
+    def test_client_version_return(self):
+        """Tests that the client_version is returned in the correct format"""
+        self.mocked_websocket.return_value.cached_query.return_value = "test/v1.23"
+        result = self.evm_collector.client_version()
+        self.assertEqual({"client_version": "test/v1.23"}, result)
+
     def test_latency(self):
         """Tests that the latency is obtained from the interface based on subscription ping"""
         self.mocked_websocket.return_value.subscription_ping_latency = 0.123
@@ -148,6 +160,18 @@ class TestConfluxCollector(TestCase):
         self.conflux_collector.client_version()
         self.mocked_websocket.return_value.cached_query.assert_called_once_with(
             payload)
+
+    def test_client_version_return_none(self):
+        """Tests that the client_version returns None if the query returns no version"""
+        self.mocked_websocket.return_value.cached_query.return_value = None
+        result = self.conflux_collector.client_version()
+        self.assertEqual(None, result)
+
+    def test_client_version_return(self):
+        """Tests that the client_version is returned in the correct format"""
+        self.mocked_websocket.return_value.cached_query.return_value = "test/v1.23"
+        result = self.conflux_collector.client_version()
+        self.assertEqual({"client_version": "test/v1.23"}, result)
 
     def test_latency(self):
         """Tests that the latency is obtained from the interface based on subscription ping"""
@@ -333,9 +357,10 @@ class TestBitcoinCollector(TestCase):
     def test_client_version_get_blocks_key(self):
         """Tests that the client version is returned as a string with the version key"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
-            "version": 5}
+            "version": 5, "subversion": 6, "protocolversion": 7}
         result = self.bitcoin_collector.client_version()
-        self.assertEqual('5', result)
+        self.assertEqual(
+            {"client_version": "version:5 subversion:6 protocolversion:7"}, result)
 
     def test_client_version_key_error_returns_none(self):
         """Tests that the client_version returns None on KeyError"""
@@ -447,9 +472,9 @@ class TestFilecoinCollector(TestCase):
     def test_client_version_get_blocks_key(self):
         """Tests that the client version is returned as a string with the version key"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
-            "Version": 5}
+            "Version": 5, "APIVersion": 6}
         result = self.filecoin_collector.client_version()
-        self.assertEqual('5', result)
+        self.assertEqual({"client_version": "version:5 APIversion:6"}, result)
 
     def test_client_version_key_error_returns_none(self):
         """Tests that the client_version returns None on KeyError"""
@@ -549,7 +574,7 @@ class TestSolanaCollector(TestCase):
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
             "solana-core": 5}
         result = self.solana_collector.client_version()
-        self.assertEqual('5', result)
+        self.assertEqual({"client_version": "5"}, result)
 
     def test_client_version_key_error_returns_none(self):
         """Tests that the client_version returns None on KeyError"""

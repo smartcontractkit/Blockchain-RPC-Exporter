@@ -82,7 +82,7 @@ class TestMetricsLoader(TestCase):
         with mock.patch('metrics.InfoMetricFamily') as info_mock:
             self.metrics_loader.client_version_metric  # pylint: disable=pointless-statement
             info_mock.assert_called_once_with(
-                'brpc_client_version_info',
+                'brpc_client_version',
                 'Client version for the particular RPC endpoint.',
                 labels=self.labels)
 

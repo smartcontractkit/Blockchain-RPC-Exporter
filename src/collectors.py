@@ -49,7 +49,11 @@ class EvmCollector():
             "params": [],
             "id": self.chain_id
         }
-        return self.interface.cached_query(payload)
+        version = self.interface.cached_query(payload)
+        if version is None:
+            return None
+        client_version = {"client_version": version}
+        return client_version
 
 
 class ConfluxCollector():
@@ -98,7 +102,11 @@ class ConfluxCollector():
             "params": [],
             "id": self.chain_id
         }
-        return self.interface.cached_query(payload)
+        version = self.interface.cached_query(payload)
+        if version is None:
+            return None
+        client_version = {"client_version": version}
+        return client_version
 
 
 class CardanoCollector():
@@ -185,8 +193,18 @@ class BitcoinCollector():
         """Runs a cached query to return client version."""
         blockchain_info = self.interface.cached_json_rpc_post(
             self.network_info_payload)
-        return validate_dict_and_return_key_value(
+        version = validate_dict_and_return_key_value(
             blockchain_info, 'version', self._logger_metadata, stringify=True)
+        subversion = validate_dict_and_return_key_value(
+            blockchain_info, 'subversion', self._logger_metadata, stringify=True)
+        protocol_version = validate_dict_and_return_key_value(
+            blockchain_info, 'protocolversion', self._logger_metadata, stringify=True)
+        if version is None:
+            return None
+        client_version = {
+            "client_version":
+            f"version:{version} subversion:{subversion} protocolversion:{protocol_version}"}
+        return client_version
 
     def latency(self):
         """Returns connection latency."""
@@ -237,8 +255,15 @@ class FilecoinCollector():
         """Runs a cached query to return client version."""
         blockchain_info = self.interface.cached_json_rpc_post(
             self.client_version_payload)
-        return validate_dict_and_return_key_value(
+        version = validate_dict_and_return_key_value(
             blockchain_info, 'Version', self._logger_metadata, stringify=True)
+        api_version = validate_dict_and_return_key_value(
+            blockchain_info, 'APIVersion', self._logger_metadata, stringify=True)
+        if version is None:
+            return None
+        client_version = {
+            "client_version": f"version:{version} APIversion:{api_version}"}
+        return client_version
 
     def latency(self):
         """Returns connection latency."""
@@ -286,8 +311,12 @@ class SolanaCollector():
         """Runs a cached query to return client version."""
         blockchain_info = self.interface.cached_json_rpc_post(
             self.client_version_payload)
-        return validate_dict_and_return_key_value(
+        version = validate_dict_and_return_key_value(
             blockchain_info, 'solana-core', self._logger_metadata, stringify=True)
+        if version is None:
+            return None
+        client_version = {"client_version": version}
+        return client_version
 
     def latency(self):
         """Returns connection latency."""

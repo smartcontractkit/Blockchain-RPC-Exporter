@@ -48,7 +48,7 @@ class MetricsLoader():
     def client_version_metric(self):
         """Returns instantiated client version metric."""
         return InfoMetricFamily(
-            'brpc_client_version_info',
+            'brpc_client_version',
             'Client version for the particular RPC endpoint.',
             labels=self._labels)
 
