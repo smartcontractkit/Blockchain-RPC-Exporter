@@ -1,16 +1,27 @@
-FROM python:3.9.10 AS build
+FROM python:3.11-slim AS base
+
+WORKDIR /opt/brpc
 COPY requirements.txt .
-RUN pip install -r ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-FROM gcr.io/distroless/python3:nonroot
 
-COPY --from=build /usr/local/lib/python3.9/site-packages/ \
- /usr/lib/python3.9/.
+FROM base AS test
 
-ENV LC_ALL C.UTF-8
-WORKDIR /usr/src/app
-COPY src/*.py .
-COPY src/collectors/* collectors/
-# https://github.com/GoogleContainerTools/distroless/blob/main/experimental/python3/BUILD#L77
+COPY requirements-dev.txt .
+RUN pip install --no-cache-dir -r requirements-dev.txt
+
+COPY src/*.py ./
+COPY src/tests tests
+
+RUN coverage run --branch -m pytest
+RUN coverage report --fail-under 90
+RUN pylint *.py
+
+FROM base AS prod
+
+COPY src/*.py ./
+
+RUN useradd -r -s /sbin/nologin nonroot
 USER nonroot
-CMD ["exporter.py"]
+EXPOSE 8080
+CMD [ "python", "exporter.py" ]

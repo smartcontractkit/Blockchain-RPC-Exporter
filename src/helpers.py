@@ -1,34 +1,48 @@
+"""Module for providing useful functions accessible globally."""
+
 import urllib.parse
-from time import perf_counter
-import json
+from json.decoder import JSONDecodeError
+from jsonrpcclient import Ok, parse_json
+
+from log import logger
 
 
-def strip_url(url):
+def strip_url(url) -> str:
     """Returns a stripped url from all parameters, usernames or passwords if present.
     It is used to safely log errors without exposing keys and authentication parameters."""
     return urllib.parse.urlparse(url).hostname
 
 
-def generate_labels_from_metadata(rpc_metadata):
-    """This function returns a fixed dict `labels` which never changes, these will eventually become prometheus labels.
-    In addition, it takes rpc_metadata dict, and extracts values for each of the static labels."""
+def return_and_validate_rpc_json_result(message: str, logger_metadata) -> dict:
+    """Loads json rpc response text and validates the response
+    as per JSON-RPC 2.0 Specification. In case the message is
+    not valid it returns None. This method is used by both HTTPS and
+    Websocket Interface."""
+    try:
+        parsed = parse_json(message)
+        if isinstance(parsed, Ok):  # pylint: disable=no-else-return
+            return parsed.result
+        else:
+            logger.error('Error in RPC message.',
+                         message=message, **logger_metadata)
+    except (JSONDecodeError, KeyError) as error:
+        logger.error('Invalid JSON RPC object in RPC message.',
+                     message=message,
+                     error=error,
+                     **logger_metadata)
+    return None
 
-    labels = ['url', 'provider', 'blockchain', 'network_name', 'network_type']
-    label_values = [
-        rpc_metadata['url'], rpc_metadata['provider'], rpc_metadata['blockchain'], rpc_metadata['network_name'],
-        rpc_metadata['network_type']
-    ]
 
-    if "chain_id" in rpc_metadata:
-        labels.append("evmChainID")
-        label_values.append(str(rpc_metadata['chain_id']))
-
-    return labels, label_values
-
-
-def hex_to_int(hex_value):
-    return int(hex_value, 16)
-
-
-def key_from_json_str(json_body, key):
-    return json.loads(json_body)[key]
+def validate_dict_and_return_key_value(data, key, logger_metadata, stringify=False):
+    """Validates that a dict is provided and returns the key value either in
+    original form or as a string"""
+    if isinstance(data, dict):
+        value = data.get(key)
+        if value is not None:
+            if stringify:
+                return str(value)
+            return value
+    logger.error("Provided data is not a dict or has no value for key",
+                 key=key,
+                 **logger_metadata)
+    return None
