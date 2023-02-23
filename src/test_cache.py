@@ -42,6 +42,6 @@ class TestCache(TestCase):
 
     def test_clear_cache(self):
         """Tests that the cache attribute is cleared when the clear_cache method is called"""
-        self.cache._cache["dummy"] = "data"
+        self.cache.store_key_value("key", "value")
         self.cache.clear_cache()
-        self.assertTrue(len(self.cache._cache) == 0)
+        self.assertEqual(self.cache._cache, {})
