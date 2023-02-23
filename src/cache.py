@@ -9,9 +9,7 @@ class Cache():
 
     def is_cached(self, key: str):
         """Check if key is cached."""
-        if key in self._cache:
-            return True
-        return False
+        return key in self._cache
 
     def store_key_value(self, key: str, value):
         """Stores key-value in cache dict."""
@@ -19,14 +17,11 @@ class Cache():
 
     def retrieve_key_value(self, key: str):
         """Retrieves key value from cache."""
-        if self.is_cached(key):
-            return self._cache.get(key)
-        return None
+        return self._cache.get(key)
 
     def remove_key_from_cache(self, key: str):
         """Deletes a key from cache."""
-        if self.is_cached(key):
-            del self._cache[key]
+        return self._cache.pop(key, None)
 
     def clear_cache(self):
         """Clears the entire cache"""
