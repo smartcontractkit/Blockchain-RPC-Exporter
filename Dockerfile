@@ -21,7 +21,7 @@ FROM base AS prod
 
 COPY src/*.py ./
 
-RUN useradd -r -s /sbin/nologin nonroot
+RUN useradd -r -s /sbin/nologin -u 999 nonroot
 USER nonroot
 EXPOSE 8080
 CMD [ "python", "exporter.py" ]
