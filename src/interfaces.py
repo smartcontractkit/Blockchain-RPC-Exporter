@@ -173,7 +173,8 @@ class WebsocketSubscription(threading.Thread):  # pylint: disable=too-many-insta
                     "Websocket has not received new message within timeout, closing connection...",
                     timeout=idle_timeout,
                     ** self._logger_metadata)
-                await websocket.close(code=4000, reason="No new messages within timeout")
+                await websocket.close(code=4000,
+                                      reason=f'No new messages within {idle_timeout} seconds')
                 break
 
     async def _process_message(self, websocket):
