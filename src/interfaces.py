@@ -158,7 +158,28 @@ class WebsocketSubscription(threading.Thread):  # pylint: disable=too-many-insta
             self.timestamp = datetime.now()
             self.subscription_ping_latency = websocket.latency
 
+    async def monitor_heads_received(self, websocket):
+        """Monitors the heads received (messages) from the websocket.
+        If no heads have been received in while the websocket closed
+        so a new connection can be created"""
+        while True:
+            idle_timeout = 60
+            prev_heads_received_count = self.heads_received
+            await asyncio.sleep(idle_timeout)
+            if websocket.closed:
+                break
+            if prev_heads_received_count == self.heads_received:
+                self._logger.error(
+                    "Websocket has not received new message within timeout, closing connection...",
+                    timeout=idle_timeout,
+                    ** self._logger_metadata)
+                await websocket.close(code=4000,
+                                      reason=f'No new messages within {idle_timeout} seconds')
+                break
+
     async def _process_message(self, websocket):
+        asyncio.create_task(
+            self.monitor_heads_received(websocket))
         async for msg in websocket:
             await self._record_latency(websocket)
             if msg is not None:
