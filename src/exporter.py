@@ -1,8 +1,8 @@
 """Main module that loads Prometheus registry and starts a web-server."""
+import threading
 from wsgiref.simple_server import make_server
 from prometheus_client import REGISTRY, make_wsgi_app
 from metrics import PrometheusCustomCollector
-import threading
 
 def return200(_, start_fn):
     """Wsgi http response function."""
@@ -25,6 +25,7 @@ def exporter(environ, start_fn):  # pylint: disable=inconsistent-return-statemen
             return return404(environ, start_fn)
 
 def liveness(environ, start_fn):
+    """Liveness endpoint function"""
     match environ['PATH_INFO']:
         case '/readiness':
             return return200(environ, start_fn)
@@ -32,12 +33,14 @@ def liveness(environ, start_fn):
             return return200(environ, start_fn)
 
 def start_liveness():
-    httpd = make_server('', 8001, liveness)
-    httpd.serve_forever()
+    """Liveness thread function"""
+    httpd_liveness = make_server('', 8001, liveness)
+    httpd_liveness.serve_forever()
 
 if __name__ == '__main__':
     REGISTRY.register(PrometheusCustomCollector())
     metrics_app = make_wsgi_app()
-    liveness_thread = threading.Thread(target=start_liveness).start()
+    liveness_thread = threading.Thread(target=start_liveness)
+    liveness_thread.start()
     httpd = make_server('', 8000, exporter)
     httpd.serve_forever()
