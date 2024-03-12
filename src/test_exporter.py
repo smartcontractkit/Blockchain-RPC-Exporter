@@ -1,7 +1,7 @@
 """Tests the exporter module"""
 from unittest import TestCase, mock
 
-from exporter import return200, return404, exporter
+from exporter import return200, return404, exporter, liveness
 
 
 class TestExporter(TestCase):
@@ -34,16 +34,16 @@ class TestExporter(TestCase):
         """Tests that the readiness path invokes return200
         with the environ and HTTP response callable"""
         environ = {'PATH_INFO': '/readiness'}
-        with mock.patch('exporter.return200') as mocked:
-            exporter(environ, self.start_fn_mock)
+        with mock.patch('liveness.return200') as mocked:
+            liveness(environ, self.start_fn_mock)
             mocked.assert_called_once_with(environ, self.start_fn_mock)
 
     def test_exporter_liveness(self):
         """Tests that the liveness path invokes return200
         with the environ and HTTP response callable"""
         environ = {'PATH_INFO': '/liveness'}
-        with mock.patch('exporter.return200') as mocked:
-            exporter(environ, self.start_fn_mock)
+        with mock.patch('liveness.return200') as mocked:
+            liveness(environ, self.start_fn_mock)
             mocked.assert_called_once_with(environ, self.start_fn_mock)
 
     def test_exporter_404(self):
