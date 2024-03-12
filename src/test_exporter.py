@@ -34,7 +34,7 @@ class TestExporter(TestCase):
         """Tests that the readiness path invokes return200
         with the environ and HTTP response callable"""
         environ = {'PATH_INFO': '/readiness'}
-        with mock.patch('liveness.return200') as mocked:
+        with mock.patch('exporter.return200') as mocked:
             liveness(environ, self.start_fn_mock)
             mocked.assert_called_once_with(environ, self.start_fn_mock)
 
@@ -42,7 +42,7 @@ class TestExporter(TestCase):
         """Tests that the liveness path invokes return200
         with the environ and HTTP response callable"""
         environ = {'PATH_INFO': '/liveness'}
-        with mock.patch('liveness.return200') as mocked:
+        with mock.patch('exporter.return200') as mocked:
             liveness(environ, self.start_fn_mock)
             mocked.assert_called_once_with(environ, self.start_fn_mock)
 
