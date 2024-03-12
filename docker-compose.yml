@@ -10,8 +10,11 @@ volumes:
 services:
   exporter:
     build: .
+    # env_file:
+    #   - path: ./.env
     ports:
       - "8000:8000"
+      - "8001:8001"
     expose:
       - 8080
     networks:
