@@ -2,7 +2,6 @@
 from interfaces import WebsocketInterface, HttpsInterface
 from helpers import validate_dict_and_return_key_value, strip_url
 
-
 class EvmCollector():
     """A collector to fetch information about evm compatible RPC endpoints."""
 
@@ -116,13 +115,9 @@ class CardanoCollector():
         self.labels = labels
         self.chain_id = chain_id
         self.block_height_payload = {
-            "type": "jsonwsp/request",
-            "version": "1.0",
-            "servicename": "ogmios",
-            "methodname": "Query",
-            "args": {
-                "query": "blockHeight"
-            }
+            "id": "exporter",
+            "jsonrpc": "2.0",
+            "method": "queryNetwork/blockHeight"
         }
         self.interface = WebsocketInterface(
             url, **client_parameters)

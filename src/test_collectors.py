@@ -188,13 +188,9 @@ class TestCardanoCollector(TestCase):
         self.chain_id = 123
         self.client_params = {"param1": "dummy", "param2": "data"}
         self.block_height_payload = {
-            "type": "jsonwsp/request",
-            "version": "1.0",
-            "servicename": "ogmios",
-            "methodname": "Query",
-            "args": {
-                "query": "blockHeight"
-            }
+            "id": "exporter",
+            "jsonrpc": "2.0",
+            "method": "queryNetwork/blockHeight"
         }
         with mock.patch('collectors.WebsocketInterface') as mocked_websocket:
             self.cardano_collector = collectors.CardanoCollector(
