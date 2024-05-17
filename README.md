@@ -8,7 +8,7 @@ Exporter currently supports all EVM-compatible chains. In addition, there is lim
 - Bitcoin (https)
 - Dogecoin (https)
 - Filecoin (https)
-- Starkware (https)
+- Starknet (https)
 
 ## Available Metrics
 

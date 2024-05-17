@@ -591,8 +591,8 @@ class TestSolanaCollector(TestCase):
         self.assertEqual(0.123, self.solana_collector.latency())
 
 
-class TestStarkwareCollector(TestCase):
-    """Tests the starkware collector class"""
+class TestStarknetCollector(TestCase):
+    """Tests the starknet collector class"""
 
     def setUp(self):
         self.url = "wss://test.com"
@@ -608,45 +608,45 @@ class TestStarkwareCollector(TestCase):
             "id": 1
         }
         with mock.patch('collectors.HttpsInterface') as mocked_connection:
-            self.starkware_collector = collectors.StarkwareCollector(
+            self.starknet_collector = collectors.StarknetCollector(
                 self.url, self.labels, self.chain_id, **self.client_params)
             self.mocked_connection = mocked_connection
 
     def test_https_interface_created(self):
-        """Tests that the starkware collector calls the https interface with the correct args"""
+        """Tests that the starknet collector calls the https interface with the correct args"""
         self.mocked_connection.assert_called_once_with(
             self.url, self.open_timeout, self.ping_timeout)
 
     def test_interface_attribute_exists(self):
         """Tests that the interface attribute exists.
         May be used by external calls to access objects such as the interface cache"""
-        self.assertTrue(hasattr(self.starkware_collector, 'interface'))
+        self.assertTrue(hasattr(self.starknet_collector, 'interface'))
 
     def test_alive_call(self):
         """Tests the alive function uses the correct call and args"""
-        self.starkware_collector.alive()
+        self.starknet_collector.alive()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
             self.block_height_payload)
 
     def test_alive_false(self):
         """Tests the alive function returns false when post returns None"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
-        result = self.starkware_collector.alive()
+        result = self.starknet_collector.alive()
         self.assertFalse(result)
 
     def test_block_height(self):
         """Tests the block_height function uses the correct call and args to get block height"""
-        self.starkware_collector.block_height()
+        self.starknet_collector.block_height()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
             self.block_height_payload)
 
     def test_block_height_returns_none(self):
         """Tests that the block height returns None if json_rpc_post returns None"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
-        result = self.starkware_collector.block_height()
+        result = self.starknet_collector.block_height()
         self.assertEqual(None, result)
 
     def test_latency(self):
         """Tests that the latency is obtained from the interface based on latest_query_latency"""
         self.mocked_connection.return_value.latest_query_latency = 0.123
-        self.assertEqual(0.123, self.starkware_collector.latency())
+        self.assertEqual(0.123, self.starknet_collector.latency())
