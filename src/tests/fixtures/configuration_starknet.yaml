@@ -1,8 +1,8 @@
-blockchain: "starkware"
+blockchain: "starknet"
 chain_id: 1234
 network_name: "TestNetwork"
 network_type: "Mainnet"
-collector: "starkware"
+collector: "starknet"
 endpoints:
   - url: wss://test1.com
     provider: TestProvider1

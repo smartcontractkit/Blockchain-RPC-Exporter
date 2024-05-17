@@ -318,8 +318,8 @@ class SolanaCollector():
         return self.interface.latest_query_latency
 
 
-class StarkwareCollector():
-    """A collector to fetch information about starkware RPC endpoints."""
+class StarknetCollector():
+    """A collector to fetch information about starknet RPC endpoints."""
 
     def __init__(self, url, labels, chain_id, **client_parameters):
 

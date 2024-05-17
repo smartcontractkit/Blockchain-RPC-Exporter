@@ -120,13 +120,13 @@ class TestCollectorRegistry(TestCase):
             helper_test_collector_registry(self, collector)
 
     @mock.patch.dict(os.environ, {
-        "CONFIG_FILE_PATH": "tests/fixtures/configuration_starkware.yaml",
+        "CONFIG_FILE_PATH": "tests/fixtures/configuration_starknet.yaml",
         "VALIDATION_FILE_PATH": "tests/fixtures/validation.yaml"
     })
-    def test_get_collector_registry_for_starkware(self):
-        """Tests that the starkware collector is called with the correct args"""
+    def test_get_collector_registry_for_starknet(self):
+        """Tests that the starknet collector is called with the correct args"""
         self.collector_registry = CollectorRegistry()
-        with mock.patch('collectors.StarkwareCollector', new=mock.Mock()) as collector:
+        with mock.patch('collectors.StarknetCollector', new=mock.Mock()) as collector:
             helper_test_collector_registry(self, collector)
 
     @mock.patch.dict(os.environ, {

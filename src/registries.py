@@ -79,8 +79,8 @@ class CollectorRegistry(EndpointRegistry):
                     collector = collectors.FilecoinCollector
                 case "solana", "solana":
                     collector = collectors.SolanaCollector
-                case "starkware", "starkware":
-                    collector = collectors.StarkwareCollector
+                case "starknet", "starknet":
+                    collector = collectors.StarknetCollector
                 case "evm", other:  # pylint: disable=unused-variable
                     collector = collectors.EvmCollector
             if collector is None:
