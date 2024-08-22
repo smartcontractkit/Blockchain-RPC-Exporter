@@ -37,37 +37,36 @@ class HttpsInterface():  # pylint: disable=too-many-instance-attributes
         self._latest_query_latency = None
         return latency
 
-    def _return_and_validate_post_request(self, payload: dict) -> str:
-        """Sends a POST request and validates the http response code. If
-        response code is OK, it returns the response.text, otherwise
-        it returns None.
-        """
+    def _return_and_validate_request(self, method='GET', payload=None, params=None):
+        """Sends a GET or POST request and validates the http response code."""
         with self.session as ses:
             try:
-                self._logger.debug("Querying endpoint.",
-                                   payload=payload,
-                                   **self._logger_metadata)
+                self._logger.debug(f"Querying endpoint with {method}.",
+                                payload=payload,
+                                params=params,
+                                **self._logger_metadata)
                 start_time = perf_counter()
-                req = ses.post(self.url,
-                               json=payload,
-                               timeout=Timeout(connect=self.connect_timeout,
-                                               read=self.response_timeout))
-                if req.status_code == requests.codes.ok:  # pylint: disable=no-member
+                if method.upper() == 'GET':
+                    req = ses.get(self.url, params=params, timeout=Timeout(connect=self.connect_timeout, read=self.response_timeout))
+                elif method.upper() == 'POST':
+                    req = ses.post(self.url, json=payload, timeout=Timeout(connect=self.connect_timeout, read=self.response_timeout))
+                else:
+                    raise ValueError(f"Unsupported HTTP method: {method}")
+
+                if req.status_code == requests.codes.ok:
                     self._latest_query_latency = perf_counter() - start_time
                     return req.text
-            except (IOError, requests.HTTPError,
-                    json.decoder.JSONDecodeError) as error:
-                self._logger.error("Problem while sending a post request.",
-                                   payload=payload,
-                                   error=error,
-                                   **self._logger_metadata)
-                return None
+            except (IOError, requests.HTTPError, json.decoder.JSONDecodeError, ValueError) as error:
+                self._logger.error(f"Problem while sending a {method} request.",
+                                payload=payload,
+                                params=params,
+                                error=error,
+                                **self._logger_metadata)
             return None
 
-    def json_rpc_post(self, payload):
-        """Checks the validity of a successful json-rpc response. If any of the
-        validations fail, the method returns type None. """
-        response = self._return_and_validate_post_request(payload)
+    def _json_rpc(self, method='GET', payload=None, params=None):
+        """Checks the validity of a successful json-rpc response for both GET and POST requests."""
+        response = self._return_and_validate_request(method, payload, params)
         if response is not None:
             result = return_and_validate_rpc_json_result(
                 response, self._logger_metadata)
@@ -75,21 +74,39 @@ class HttpsInterface():  # pylint: disable=too-many-instance-attributes
                 return result
         return None
 
+    def json_rpc_post(self, payload):
+        """Wrapper for POST json-rpc requests."""
+        return self._json_rpc(method='POST', payload=payload)
+
+    def json_rpc_get(self, params=None):
+        """Wrapper for GET json-rpc requests."""
+        return self._json_rpc(method='GET', params=params)
+
     def cached_json_rpc_post(self, payload: dict):
-        """Calls json_rpc_post and stores the result in in-memory
-        cache, by using payload as key.Method will always return
-        cached value after the first call. Cache never expires."""
-        cache_key = str(payload)
+        """Calls json_rpc_post and stores the result in in-memory cache."""
+        cache_key = f"POST:{str(payload)}"
 
         if self.cache.is_cached(cache_key):
             return_value = self.cache.retrieve_key_value(cache_key)
             return return_value
 
-        value = self.json_rpc_post(payload)
+        value = self.json_rpc_post(payload=payload)
         if value is not None:
             self.cache.store_key_value(cache_key, value)
         return value
 
+    def cached_json_rpc_get(self, params: dict = None):
+        """Calls json_rpc_get and stores the result in in-memory cache."""
+        cache_key = f"GET:{self.url}-{str(params)}"
+
+        if self.cache.is_cached(cache_key):
+            return_value = self.cache.retrieve_key_value(cache_key)
+            return return_value
+
+        value = self.json_rpc_get(params)
+        if value is not None:
+            self.cache.store_key_value(cache_key, value)
+        return value
 
 class WebsocketSubscription(threading.Thread):  # pylint: disable=too-many-instance-attributes
     """A thread class used to subscribe and track
