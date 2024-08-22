@@ -9,7 +9,7 @@ from websockets.exceptions import ConnectionClosed, WebSocketException
 import requests
 from urllib3 import Timeout
 
-from helpers import strip_url, return_and_validate_rpc_json_result
+from helpers import strip_url, return_and_validate_rpc_json_result, return_and_validate_restApi_json_result
 from cache import Cache
 from log import logger
 
@@ -70,9 +70,10 @@ class HttpsInterface():  # pylint: disable=too-many-instance-attributes
                                 **self._logger_metadata)
             return None
 
-    def _json_rpc(self, method='GET', payload=None, params=None):
-        """Checks the validity of a successful json-rpc response for both GET and POST requests."""
-        response = self._return_and_validate_request(method, payload, params)
+    def json_rpc_post(self, payload):
+        """Checks the validity of a successful json-rpc response. If any of the
+        validations fail, the method returns type None. """
+        response = self._return_and_validate_request(method='POST', payload=payload)
         if response is not None:
             result = return_and_validate_rpc_json_result(
                 response, self._logger_metadata)
@@ -80,17 +81,9 @@ class HttpsInterface():  # pylint: disable=too-many-instance-attributes
                 return result
         return None
 
-    def json_rpc_post(self, payload):
-        """Wrapper for POST json-rpc requests."""
-        return self._json_rpc(method='POST', payload=payload)
-
-    def json_rpc_get(self, params=None):
-        """Wrapper for GET json-rpc requests."""
-        return self._json_rpc(method='GET', params=params)
-
     def cached_json_rpc_post(self, payload: dict):
         """Calls json_rpc_post and stores the result in in-memory cache."""
-        cache_key = f"POST:{str(payload)}"
+        cache_key = f"rpc:{str(payload)}"
 
         if self.cache.is_cached(cache_key):
             return_value = self.cache.retrieve_key_value(cache_key)
@@ -101,15 +94,26 @@ class HttpsInterface():  # pylint: disable=too-many-instance-attributes
             self.cache.store_key_value(cache_key, value)
         return value
 
-    def cached_json_rpc_get(self, params: dict = None):
+    def json_restApi_get(self, params: dict = None):
+        """Checks the validity of a successful json-rpc response. If any of the
+        validations fail, the method returns type None. """
+        response = self._return_and_validate_request(method='GET', params=params)
+        if response is not None:
+            result = return_and_validate_restApi_json_result(
+                response, self._logger_metadata)
+            if result is not None:
+                return result
+        return None
+
+    def cached_restApi_rpc_get(self, params: dict = None):
         """Calls json_rpc_get and stores the result in in-memory cache."""
-        cache_key = f"GET:{self.url}-{str(params)}"
+        cache_key = f"rest:{str(params)}"
 
         if self.cache.is_cached(cache_key):
             return_value = self.cache.retrieve_key_value(cache_key)
             return return_value
 
-        value = self.json_rpc_get(params)
+        value = self.json_restApi_get(params)
         if value is not None:
             self.cache.store_key_value(cache_key, value)
         return value

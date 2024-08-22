@@ -354,7 +354,7 @@ class StarknetCollector():
 
 
 class AptosCollector():
-    """A collector to fetch information about starknet Aptos endpoints."""
+    """A collector to fetch information about Aptos endpoints."""
 
     def __init__(self, url, labels, chain_id, **client_parameters):
 
@@ -363,23 +363,32 @@ class AptosCollector():
         self.interface = HttpsInterface(url, client_parameters.get('open_timeout'),
                                         client_parameters.get('ping_timeout'))
 
+        self._logger_metadata = {
+            'component': 'AptosCollector',
+            'url': strip_url(url)
+        }
+
     def alive(self):
         """Returns true if endpoint is alive, false if not."""
         # Run cached query because we can also fetch client version from this
         # later on. This will save us an RPC call per run.
-        return self.interface.cached_json_rpc_get() is not None
+        return self.interface.cached_restApi_rpc_get() is not None
 
     def block_height(self):
         """Runs a cached query to return block height"""
-        blockchain_info = self.interface.cached_json_rpc_get()
+        blockchain_info = self.interface.cached_restApi_rpc_get()
         return validate_dict_and_return_key_value(
-            blockchain_info, 'block_height', self._logger_metadata)
+            blockchain_info, 'block_height', self._logger_metadata, to_number=True)
 
     def client_version(self):
         """Runs a cached query to return client version."""
-        blockchain_info = self.interface.cached_json_rpc_get()
-        return validate_dict_and_return_key_value(
-            blockchain_info, 'git_hash', self._logger_metadata)
+        blockchain_info = self.interface.cached_restApi_rpc_get()
+        version = validate_dict_and_return_key_value(
+            blockchain_info, 'git_hash', self._logger_metadata, stringify=True)
+        if version is None:
+            return None
+        client_version = {"client_version": version}
+        return client_version
 
     def latency(self):
         """Returns connection latency."""
