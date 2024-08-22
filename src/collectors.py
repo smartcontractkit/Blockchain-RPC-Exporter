@@ -351,3 +351,36 @@ class StarknetCollector():
     def latency(self):
         """Returns connection latency."""
         return self.interface.latest_query_latency
+
+
+class AptosCollector():
+    """A collector to fetch information about starknet Aptos endpoints."""
+
+    def __init__(self, url, labels, chain_id, **client_parameters):
+
+        self.labels = labels
+        self.chain_id = chain_id
+        self.interface = HttpsInterface(url, client_parameters.get('open_timeout'),
+                                        client_parameters.get('ping_timeout'))
+
+    def alive(self):
+        """Returns true if endpoint is alive, false if not."""
+        # Run cached query because we can also fetch client version from this
+        # later on. This will save us an RPC call per run.
+        return self.interface.cached_json_rpc_get() is not None
+
+    def block_height(self):
+        """Runs a cached query to return block height"""
+        blockchain_info = self.interface.cached_json_rpc_get()
+        return validate_dict_and_return_key_value(
+            blockchain_info, 'block_height', self._logger_metadata)
+
+    def client_version(self):
+        """Runs a cached query to return client version."""
+        blockchain_info = self.interface.cached_json_rpc_get()
+        return validate_dict_and_return_key_value(
+            blockchain_info, 'git_hash', self._logger_metadata)
+
+    def latency(self):
+        """Returns connection latency."""
+        return self.interface.latest_query_latency
