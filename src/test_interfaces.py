@@ -66,7 +66,7 @@ class TestConfiguration(TestCase):
                 "id": "exporter",
                 "method": "getnetworkinfo"
             }
-            result = self.interface._return_and_validate_post_request(payload)
+            result = self.interface._return_and_validate_request(method='POST', payload=payload)
             self.assertEqual(result, "Ok")
             self.assertEqual(m.called, True)
             self.assertEqual(m.call_count, 1)
@@ -80,7 +80,7 @@ class TestConfiguration(TestCase):
                 "id": "exporter",
                 "method": "getnetworkinfo"
             }
-            result = self.interface._return_and_validate_post_request(payload)
+            result = self.interface._return_and_validate_request(method='POST', payload=payload)
             self.assertEqual(result, None)
             self.assertEqual(m.called, True)
             self.assertEqual(m.call_count, 1)

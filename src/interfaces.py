@@ -47,13 +47,19 @@ class HttpsInterface():  # pylint: disable=too-many-instance-attributes
                                 **self._logger_metadata)
                 start_time = perf_counter()
                 if method.upper() == 'GET':
-                    req = ses.get(self.url, params=params, timeout=Timeout(connect=self.connect_timeout, read=self.response_timeout))
+                    req = ses.get(self.url,
+                                  params=params,
+                                  timeout=Timeout(connect=self.connect_timeout,
+                                                  read=self.response_timeout))
                 elif method.upper() == 'POST':
-                    req = ses.post(self.url, json=payload, timeout=Timeout(connect=self.connect_timeout, read=self.response_timeout))
+                    req = ses.post(self.url,
+                                   json=payload,
+                                   timeout=Timeout(connect=self.connect_timeout,
+                                                   read=self.response_timeout))
                 else:
                     raise ValueError(f"Unsupported HTTP method: {method}")
 
-                if req.status_code == requests.codes.ok:
+                if req.status_code == requests.codes.ok: # pylint: disable=no-member
                     self._latest_query_latency = perf_counter() - start_time
                     return req.text
             except (IOError, requests.HTTPError, json.decoder.JSONDecodeError, ValueError) as error:
