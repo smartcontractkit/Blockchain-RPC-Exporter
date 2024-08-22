@@ -9,7 +9,7 @@ from websockets.exceptions import ConnectionClosed, WebSocketException
 import requests
 from urllib3 import Timeout
 
-from helpers import strip_url, return_and_validate_rpc_json_result, return_and_validate_restApi_json_result
+from helpers import strip_url, return_and_validate_rpc_json_result, return_and_validate_rest_api_json_result # pylint: disable=line-too-long
 from cache import Cache
 from log import logger
 
@@ -94,18 +94,18 @@ class HttpsInterface():  # pylint: disable=too-many-instance-attributes
             self.cache.store_key_value(cache_key, value)
         return value
 
-    def json_restApi_get(self, params: dict = None):
+    def json_rest_api_get(self, params: dict = None):
         """Checks the validity of a successful json-rpc response. If any of the
         validations fail, the method returns type None. """
         response = self._return_and_validate_request(method='GET', params=params)
         if response is not None:
-            result = return_and_validate_restApi_json_result(
+            result = return_and_validate_rest_api_json_result(
                 response, self._logger_metadata)
             if result is not None:
                 return result
         return None
 
-    def cached_restApi_rpc_get(self, params: dict = None):
+    def cached_rest_api_rpc_get(self, params: dict = None):
         """Calls json_rpc_get and stores the result in in-memory cache."""
         cache_key = f"rest:{str(params)}"
 
@@ -113,7 +113,7 @@ class HttpsInterface():  # pylint: disable=too-many-instance-attributes
             return_value = self.cache.retrieve_key_value(cache_key)
             return return_value
 
-        value = self.json_restApi_get(params)
+        value = self.json_rest_api_get(params)
         if value is not None:
             self.cache.store_key_value(cache_key, value)
         return value
