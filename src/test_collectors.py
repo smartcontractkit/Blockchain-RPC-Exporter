@@ -686,47 +686,47 @@ class TestAptosCollector(TestCase):
     def test_alive_call(self):
         """Tests the alive function uses the correct call"""
         self.aptos_collector.alive()
-        self.mocked_connection.return_value.cached_rest_api_get.assert_called_once()
+        self.mocked_connection.return_value.cached_json_rest_api_get.assert_called_once()
 
     def test_alive_false(self):
         """Tests the alive function returns false when get returns None"""
-        self.mocked_connection.return_value.cached_rest_api_get.return_value = None
+        self.mocked_connection.return_value.cached_json_rest_api_get.return_value = None
         result = self.aptos_collector.alive()
         self.assertFalse(result)
 
     def test_block_height(self):
         """Tests the block_height function uses the correct call to get block height"""
         self.aptos_collector.block_height()
-        self.mocked_connection.return_value.cached_rest_api_get.assert_called_once()
+        self.mocked_connection.return_value.cached_json_rest_api_get.assert_called_once()
 
     def test_block_height_returns_none(self):
-        """Tests that the block height returns None if cached_rest_api_get returns None"""
-        self.mocked_connection.return_value.cached_rest_api_get.return_value = None
+        """Tests that the block height returns None if cached_json_rest_api_get returns None"""
+        self.mocked_connection.return_value.cached_json_rest_api_get.return_value = None
         result = self.aptos_collector.block_height()
         self.assertIsNone(result)
 
     def test_client_version(self):
         """Tests the client_version function uses the correct call to get client version"""
         self.aptos_collector.client_version()
-        self.mocked_connection.return_value.cached_rest_api_get.assert_called_once()
+        self.mocked_connection.return_value.cached_json_rest_api_get.assert_called_once()
 
     def test_client_version_get_git_hash(self):
         """Tests that the client version is returned as a string with the git_hash key"""
-        self.mocked_connection.return_value.cached_rest_api_get.return_value = {
+        self.mocked_connection.return_value.cached_json_rest_api_get.return_value = {
             "git_hash": "abcdef123"}
         result = self.aptos_collector.client_version()
         self.assertEqual({"client_version": "abcdef123"}, result)
 
     def test_client_version_key_error_returns_none(self):
         """Tests that the client_version returns None on KeyError"""
-        self.mocked_connection.return_value.cached_rest_api_get.return_value = {
+        self.mocked_connection.return_value.cached_json_rest_api_get.return_value = {
             "dummy_key": "value"}
         result = self.aptos_collector.client_version()
         self.assertIsNone(result)
 
     def test_client_version_returns_none(self):
-        """Tests that the client_version returns None if cached_rest_api_get returns None"""
-        self.mocked_connection.return_value.cached_rest_api_get.return_value = None
+        """Tests that the client_version returns None if cached_json_rest_api_get returns None"""
+        self.mocked_connection.return_value.cached_json_rest_api_get.return_value = None
         result = self.aptos_collector.client_version()
         self.assertIsNone(result)
 

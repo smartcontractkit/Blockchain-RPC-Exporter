@@ -105,7 +105,7 @@ class HttpsInterface():  # pylint: disable=too-many-instance-attributes
                 return result
         return None
 
-    def cached_rest_api_get(self, params: dict = None):
+    def cached_json_rest_api_get(self, params: dict = None):
         """Calls json_rest_api_get and stores the result in in-memory cache."""
         cache_key = f"rest:{str(params)}"
 

@@ -372,17 +372,17 @@ class AptosCollector():
         """Returns true if endpoint is alive, false if not."""
         # Run cached query because we can also fetch client version from this
         # later on. This will save us an RPC call per run.
-        return self.interface.cached_rest_api_get() is not None
+        return self.interface.cached_json_rest_api_get() is not None
 
     def block_height(self):
         """Runs a cached query to return block height"""
-        blockchain_info = self.interface.cached_rest_api_get()
+        blockchain_info = self.interface.cached_json_rest_api_get()
         return validate_dict_and_return_key_value(
             blockchain_info, 'block_height', self._logger_metadata, to_number=True)
 
     def client_version(self):
         """Runs a cached query to return client version."""
-        blockchain_info = self.interface.cached_rest_api_get()
+        blockchain_info = self.interface.cached_json_rest_api_get()
         version = validate_dict_and_return_key_value(
             blockchain_info, 'git_hash', self._logger_metadata, stringify=True)
         if version is None:
