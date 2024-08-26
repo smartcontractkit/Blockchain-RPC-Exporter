@@ -650,3 +650,87 @@ class TestStarknetCollector(TestCase):
         """Tests that the latency is obtained from the interface based on latest_query_latency"""
         self.mocked_connection.return_value.latest_query_latency = 0.123
         self.assertEqual(0.123, self.starknet_collector.latency())
+
+class TestAptosCollector(TestCase):
+    """Tests the Aptos collector class"""
+
+    def setUp(self):
+        self.url = "https://test.com"
+        self.labels = ["dummy", "labels"]
+        self.chain_id = 123
+        self.open_timeout = 8
+        self.ping_timeout = 9
+        self.client_params = {
+            "open_timeout": self.open_timeout, "ping_timeout": self.ping_timeout}
+        with mock.patch('collectors.HttpsInterface') as mocked_connection:
+            self.aptos_collector = collectors.AptosCollector(
+                self.url, self.labels, self.chain_id, **self.client_params)
+            self.mocked_connection = mocked_connection
+
+    def test_logger_metadata(self):
+        """Validate logger metadata. Makes sure url is stripped by helpers.strip_url function."""
+        expected_metadata = {
+            'component': 'AptosCollector', 'url': 'test.com'}
+        self.assertEqual(expected_metadata,
+                         self.aptos_collector._logger_metadata)
+
+    def test_https_interface_created(self):
+        """Tests that the Aptos collector calls the https interface with the correct args"""
+        self.mocked_connection.assert_called_once_with(
+            self.url, self.open_timeout, self.ping_timeout)
+
+    def test_interface_attribute_exists(self):
+        """Tests that the interface attribute exists."""
+        self.assertTrue(hasattr(self.aptos_collector, 'interface'))
+
+    def test_alive_call(self):
+        """Tests the alive function uses the correct call"""
+        self.aptos_collector.alive()
+        self.mocked_connection.return_value.cached_rest_api_rpc_get.assert_called_once()
+
+    def test_alive_false(self):
+        """Tests the alive function returns false when get returns None"""
+        self.mocked_connection.return_value.cached_rest_api_rpc_get.return_value = None
+        result = self.aptos_collector.alive()
+        self.assertFalse(result)
+
+    def test_block_height(self):
+        """Tests the block_height function uses the correct call to get block height"""
+        self.aptos_collector.block_height()
+        self.mocked_connection.return_value.cached_rest_api_rpc_get.assert_called_once()
+
+    def test_block_height_returns_none(self):
+        """Tests that the block height returns None if cached_rest_api_rpc_get returns None"""
+        self.mocked_connection.return_value.cached_rest_api_rpc_get.return_value = None
+        result = self.aptos_collector.block_height()
+        self.assertIsNone(result)
+
+    def test_client_version(self):
+        """Tests the client_version function uses the correct call to get client version"""
+        self.aptos_collector.client_version()
+        self.mocked_connection.return_value.cached_rest_api_rpc_get.assert_called_once()
+
+    def test_client_version_get_git_hash(self):
+        """Tests that the client version is returned as a string with the git_hash key"""
+        self.mocked_connection.return_value.cached_rest_api_rpc_get.return_value = {
+            "git_hash": "abcdef123"}
+        result = self.aptos_collector.client_version()
+        self.assertEqual({"client_version": "abcdef123"}, result)
+
+    def test_client_version_key_error_returns_none(self):
+        """Tests that the client_version returns None on KeyError"""
+        self.mocked_connection.return_value.cached_rest_api_rpc_get.return_value = {
+            "dummy_key": "value"}
+        result = self.aptos_collector.client_version()
+        self.assertIsNone(result)
+
+    def test_client_version_returns_none(self):
+        """Tests that the client_version returns None if cached_rest_api_rpc_get returns None"""
+        self.mocked_connection.return_value.cached_rest_api_rpc_get.return_value = None
+        result = self.aptos_collector.client_version()
+        self.assertIsNone(result)
+
+    def test_latency(self):
+        """Tests that the latency is obtained from the interface based on latest_query_latency"""
+        self.mocked_connection.return_value.latest_query_latency = 0.123
+        self.assertEqual(0.123, self.aptos_collector.latency())
