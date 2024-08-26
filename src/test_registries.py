@@ -130,6 +130,16 @@ class TestCollectorRegistry(TestCase):
             helper_test_collector_registry(self, collector)
 
     @mock.patch.dict(os.environ, {
+        "CONFIG_FILE_PATH": "tests/fixtures/configuration_aptos.yaml",
+        "VALIDATION_FILE_PATH": "tests/fixtures/validation.yaml"
+    })
+    def test_get_collector_registry_for_aptos(self):
+        """Tests that the aptos collector is called with the correct args"""
+        self.collector_registry = CollectorRegistry()
+        with mock.patch('collectors.AptosCollector', new=mock.Mock()) as collector:
+            helper_test_collector_registry(self, collector)
+
+    @mock.patch.dict(os.environ, {
         "CONFIG_FILE_PATH": "tests/fixtures/configuration_evm.yaml",
         "VALIDATION_FILE_PATH": "tests/fixtures/validation.yaml"
     })

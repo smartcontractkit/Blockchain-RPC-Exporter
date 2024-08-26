@@ -66,7 +66,7 @@ class TestConfiguration(TestCase):
                 "id": "exporter",
                 "method": "getnetworkinfo"
             }
-            result = self.interface._return_and_validate_post_request(payload)
+            result = self.interface._return_and_validate_request(method='POST', payload=payload)
             self.assertEqual(result, "Ok")
             self.assertEqual(m.called, True)
             self.assertEqual(m.call_count, 1)
@@ -80,11 +80,50 @@ class TestConfiguration(TestCase):
                 "id": "exporter",
                 "method": "getnetworkinfo"
             }
-            result = self.interface._return_and_validate_post_request(payload)
+            result = self.interface._return_and_validate_request(method='POST', payload=payload)
             self.assertEqual(result, None)
             self.assertEqual(m.called, True)
             self.assertEqual(m.call_count, 1)
 
+    def test_return_and_validate_get_request_method_200(self):
+        """Tests the GET request method is called once and returns Ok for 200 status code"""
+        with requests_mock.Mocker(session=self.interface.session) as m:
+            m.get(self.url, text="Ok", status_code=200)
+            params = {
+                "param1": "value1",
+                "param2": "value2"
+            }
+            result = self.interface._return_and_validate_request(method='GET', params=params)
+            self.assertEqual(result, "Ok")
+            self.assertEqual(m.called, True)
+            self.assertEqual(m.call_count, 1)
+            # Check if the GET request was made with the correct parameters
+            expected_params = {
+                'apikey': ['123456'],
+                'param1': ['value1'],
+                'param2': ['value2']
+            }
+            self.assertEqual(m.last_request.qs, expected_params)
+
+    def test_return_and_validate_get_request_method_non_200(self):
+        """Tests the GET request method is called once and returns None for 500 status code"""
+        with requests_mock.Mocker(session=self.interface.session) as m:
+            m.get(self.url, text="Error", status_code=500)
+            params = {
+                "param1": "value1",
+                "param2": "value2"
+            }
+            result = self.interface._return_and_validate_request(method='GET', params=params)
+            self.assertEqual(result, None)
+            self.assertEqual(m.called, True)
+            self.assertEqual(m.call_count, 1)
+            # Check if the GET request was made with the correct parameters
+            expected_params = {
+                'apikey': ['123456'],
+                'param1': ['value1'],
+                'param2': ['value2']
+            }
+            self.assertEqual(m.last_request.qs, expected_params)
 
 class TestWebSocketSubscription(TestCase):
     """Tests the web socket subscription class"""
