@@ -105,8 +105,8 @@ class HttpsInterface():  # pylint: disable=too-many-instance-attributes
                 return result
         return None
 
-    def cached_rest_api_rpc_get(self, params: dict = None):
-        """Calls json_rpc_get and stores the result in in-memory cache."""
+    def cached_rest_api_get(self, params: dict = None):
+        """Calls json_rest_api_get and stores the result in in-memory cache."""
         cache_key = f"rest:{str(params)}"
 
         if self.cache.is_cached(cache_key):
