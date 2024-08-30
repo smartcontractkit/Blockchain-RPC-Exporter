@@ -427,7 +427,7 @@ class TronCollector():
             self.client_version_payload) is not None
 
     def block_height(self):
-        """Returns blockheight after converting string hexadecimal value to an int"""
+        """Runs a cached query and returns blockheight after converting hex string value to an int"""
         result = self.interface.cached_json_rpc_post(self.block_height_payload)
 
         if result and isinstance(result, str) and result.startswith('0x'):
