@@ -395,7 +395,7 @@ class AptosCollector():
         return self.interface.latest_query_latency
 
 class TronCollector():
-    """A collector to fetch information about Aptos endpoints."""
+    """A collector to fetch information from Tron endpoints."""
 
     def __init__(self, url, labels, chain_id, **client_parameters):
 
