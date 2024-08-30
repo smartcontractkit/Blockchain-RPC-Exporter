@@ -393,3 +393,57 @@ class AptosCollector():
     def latency(self):
         """Returns connection latency."""
         return self.interface.latest_query_latency
+
+class TronCollector():
+    """A collector to fetch information about Aptos endpoints."""
+
+    def __init__(self, url, labels, chain_id, **client_parameters):
+
+        self.labels = labels
+        self.chain_id = chain_id
+        self.interface = HttpsInterface(url, client_parameters.get('open_timeout'),
+                                        client_parameters.get('ping_timeout'))
+
+        self._logger_metadata = {
+            'component': 'TronCollector',
+            'url': strip_url(url)
+        }
+        self.client_version_payload = {
+            'jsonrpc': '2.0',
+            'method': "web3_clientVersion",
+            'id': 1
+        }
+        self.block_height_payload = {
+            'jsonrpc': '2.0',
+            'method': "eth_blockNumber",
+            'id': 1
+        }
+
+    def alive(self):
+        """Returns true if endpoint is alive, false if not."""
+        # Run cached query because we can also fetch client version from this
+        # later on. This will save us an RPC call per run.
+        return self.interface.cached_json_rpc_post(
+            self.client_version_payload) is not None
+
+    def block_height(self):
+        """Returns blockheight after converting string hexadecimal value to an int"""
+        result = self.interface.cached_json_rpc_post(self.block_height_payload)
+
+        if result and isinstance(result, str) and result.startswith('0x'):
+            return int(result, 16)
+        else:
+            raise ValueError(f"Invalid block height result: {result}")
+
+    def client_version(self):
+        """Runs a cached query to return client version."""
+        version = self.interface.cached_json_rpc_post(
+            self.client_version_payload)
+        if version is None:
+            return None
+        client_version = {"client_version": version}
+        return client_version
+
+    def latency(self):
+        """Returns connection latency."""
+        return self.interface.latest_query_latency
