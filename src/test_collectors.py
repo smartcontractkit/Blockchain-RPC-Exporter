@@ -734,3 +734,80 @@ class TestAptosCollector(TestCase):
         """Tests that the latency is obtained from the interface based on latest_query_latency"""
         self.mocked_connection.return_value.latest_query_latency = 0.123
         self.assertEqual(0.123, self.aptos_collector.latency())
+
+class TestTronCollector(TestCase):
+    """Tests the Tron collector class"""
+
+    def setUp(self):
+        self.url = "https://test.com"
+        self.labels = ["dummy", "labels"]
+        self.chain_id = 123
+        self.open_timeout = 8
+        self.ping_timeout = 9
+        self.client_params = {
+            "open_timeout": self.open_timeout, "ping_timeout": self.ping_timeout}
+        with mock.patch('collectors.HttpsInterface') as mocked_connection:
+            self.tron_collector = collectors.TronCollector(
+                self.url, self.labels, self.chain_id, **self.client_params)
+            self.mocked_connection = mocked_connection
+
+    def test_logger_metadata(self):
+        """Validate logger metadata. Makes sure url is stripped by helpers.strip_url function."""
+        expected_metadata = {
+            'component': 'TronCollector', 'url': 'test.com'}
+        self.assertEqual(expected_metadata,
+                         self.tron_collector._logger_metadata)
+
+    def test_https_interface_created(self):
+        """Tests that the Tron collector calls the https interface with the correct args"""
+        self.mocked_connection.assert_called_once_with(
+            self.url, self.open_timeout, self.ping_timeout)
+
+    def test_interface_attribute_exists(self):
+        """Tests that the interface attribute exists."""
+        self.assertTrue(hasattr(self.tron_collector, 'interface'))
+
+    def test_alive_call(self):
+        """Tests the alive function uses the correct call"""
+        self.tron_collector.alive()
+        self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
+            self.tron_collector.client_version_payload)
+
+    def test_alive_false(self):
+        """Tests the alive function returns false when post returns None"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
+        result = self.tron_collector.alive()
+        self.assertFalse(result)
+
+    def test_block_height(self):
+        """Tests the block_height function uses the correct call to get block height"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = "0x1a2b3c"
+        result = self.tron_collector.block_height()
+        self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
+            self.tron_collector.block_height_payload)
+        self.assertEqual(result, 1715004)
+
+    def test_block_height_raises_value_error(self):
+        """Tests that the block height raises ValueError if result is invalid"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = "invalid"
+        with self.assertRaises(ValueError):
+            self.tron_collector.block_height()
+
+    def test_client_version(self):
+        """Tests the client_version function uses the correct call to get client version"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = "Tron/v1.0.0"
+        result = self.tron_collector.client_version()
+        self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
+            self.tron_collector.client_version_payload)
+        self.assertEqual(result, {"client_version": "Tron/v1.0.0"})
+
+    def test_client_version_returns_none(self):
+        """Tests that the client_version returns None if cached_json_rpc_post returns None"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
+        result = self.tron_collector.client_version()
+        self.assertIsNone(result)
+
+    def test_latency(self):
+        """Tests that the latency is obtained from the interface based on latest_query_latency"""
+        self.mocked_connection.return_value.latest_query_latency = 0.123
+        self.assertEqual(0.123, self.tron_collector.latency())

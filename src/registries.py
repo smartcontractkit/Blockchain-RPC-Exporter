@@ -83,6 +83,8 @@ class CollectorRegistry(EndpointRegistry):
                     collector = collectors.StarknetCollector
                 case "aptos", "aptos":
                     collector = collectors.AptosCollector
+                case "tron", "tron":
+                    collector = collectors.TronCollector
                 case "evm", other:  # pylint: disable=unused-variable
                     collector = collectors.EvmCollector
             if collector is None:
