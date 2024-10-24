@@ -5,9 +5,10 @@ from helpers import validate_dict_and_return_key_value, strip_url
 class EvmCollector():
     """A collector to fetch information about evm compatible RPC endpoints."""
 
-    def __init__(self, url, labels, chain_id, **client_parameters):
+    def __init__(self, url, labels, chain_id, network_status, **client_parameters):
         self.labels = labels
         self.chain_id = chain_id
+        self.network_status = network_status
 
         sub_payload = {
             "method": 'eth_subscribe',
@@ -58,9 +59,10 @@ class EvmCollector():
 class ConfluxCollector():
     """A collector to fetch information about conflux RPC endpoints."""
 
-    def __init__(self, url, labels, chain_id, **client_parameters):
+    def __init__(self, url, labels, chain_id, network_status, **client_parameters):
         self.labels = labels
         self.chain_id = chain_id
+        self.network_status = network_status
 
         sub_payload = {
             "method": 'cfx_subscribe',
@@ -111,9 +113,10 @@ class ConfluxCollector():
 class CardanoCollector():
     """A collector to fetch information about cardano RPC endpoints."""
 
-    def __init__(self, url, labels, chain_id, **client_parameters):
+    def __init__(self, url, labels, chain_id, network_status, **client_parameters):
         self.labels = labels
         self.chain_id = chain_id
+        self.network_status = network_status
         self.block_height_payload = {
             "id": "exporter",
             "jsonrpc": "2.0",
@@ -140,10 +143,11 @@ class CardanoCollector():
 class BitcoinCollector():
     """A collector to fetch information about Bitcoin RPC endpoints."""
 
-    def __init__(self, url, labels, chain_id, **client_parameters):
+    def __init__(self, url, labels, chain_id, network_status, **client_parameters):
 
         self.labels = labels
         self.chain_id = chain_id
+        self.network_status = network_status
         self.interface = HttpsInterface(url, client_parameters.get('open_timeout'),
                                         client_parameters.get('ping_timeout'))
         self._logger_metadata = {
@@ -209,10 +213,11 @@ class BitcoinCollector():
 class FilecoinCollector():
     """A collector to fetch information about filecoin RPC endpoints."""
 
-    def __init__(self, url, labels, chain_id, **client_parameters):
+    def __init__(self, url, labels, chain_id, network_status, **client_parameters):
 
         self.labels = labels
         self.chain_id = chain_id
+        self.network_status = network_status
         self.interface = HttpsInterface(url, client_parameters.get('open_timeout'),
                                         client_parameters.get('ping_timeout'))
         self._logger_metadata = {
@@ -264,14 +269,19 @@ class FilecoinCollector():
         """Returns connection latency."""
         return self.interface.latest_query_latency
 
+    def network_status(self):
+        """Returns network status."""
+        return self.interface.network_status
+
 
 class SolanaCollector():
     """A collector to fetch information about solana RPC endpoints."""
 
-    def __init__(self, url, labels, chain_id, **client_parameters):
+    def __init__(self, url, labels, chain_id, network_status, **client_parameters):
 
         self.labels = labels
         self.chain_id = chain_id
+        self.network_status = network_status
         self.interface = HttpsInterface(url, client_parameters.get('open_timeout'),
                                         client_parameters.get('ping_timeout'))
         self._logger_metadata = {
@@ -321,10 +331,11 @@ class SolanaCollector():
 class StarknetCollector():
     """A collector to fetch information about starknet RPC endpoints."""
 
-    def __init__(self, url, labels, chain_id, **client_parameters):
+    def __init__(self, url, labels, chain_id, network_status, **client_parameters):
 
         self.labels = labels
         self.chain_id = chain_id
+        self.network_status = network_status
         self.interface = HttpsInterface(url, client_parameters.get('open_timeout'),
                                         client_parameters.get('ping_timeout'))
 
@@ -356,10 +367,11 @@ class StarknetCollector():
 class AptosCollector():
     """A collector to fetch information about Aptos endpoints."""
 
-    def __init__(self, url, labels, chain_id, **client_parameters):
+    def __init__(self, url, labels, chain_id, network_status, **client_parameters):
 
         self.labels = labels
         self.chain_id = chain_id
+        self.network_status = network_status
         self.interface = HttpsInterface(url, client_parameters.get('open_timeout'),
                                         client_parameters.get('ping_timeout'))
 

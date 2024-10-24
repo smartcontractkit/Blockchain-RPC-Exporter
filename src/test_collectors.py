@@ -12,6 +12,7 @@ class TestEvmCollector(TestCase):
         self.url = "wss://test.com"
         self.labels = ["dummy", "labels"]
         self.chain_id = 123
+        self.network_status = "live"
         self.client_params = {"param1": "dummy", "param2": "data"}
         self.sub_payload = {
             "method": 'eth_subscribe',
@@ -21,7 +22,7 @@ class TestEvmCollector(TestCase):
         }
         with mock.patch('collectors.WebsocketInterface') as mocked_websocket:
             self.evm_collector = collectors.EvmCollector(
-                self.url, self.labels, self.chain_id, **self.client_params)
+                self.url, self.labels, self.chain_id, self.network_status, **self.client_params)
             self.mocked_websocket = mocked_websocket
 
     def test_websocket_interface_created(self):
@@ -99,6 +100,7 @@ class TestConfluxCollector(TestCase):
         self.url = "wss://test.com"
         self.labels = ["dummy", "labels"]
         self.chain_id = 123
+        self.network_status = "live"
         self.client_params = {"param1": "dummy", "param2": "data"}
         self.sub_payload = {
             "method": 'cfx_subscribe',
@@ -108,7 +110,7 @@ class TestConfluxCollector(TestCase):
         }
         with mock.patch('collectors.WebsocketInterface') as mocked_websocket:
             self.conflux_collector = collectors.ConfluxCollector(
-                self.url, self.labels, self.chain_id, **self.client_params)
+                self.url, self.labels, self.chain_id, self.network_status, **self.client_params)
             self.mocked_websocket = mocked_websocket
 
     def test_websocket_interface_created(self):
@@ -186,6 +188,7 @@ class TestCardanoCollector(TestCase):
         self.url = "wss://test.com"
         self.labels = ["dummy", "labels"]
         self.chain_id = 123
+        self.network_status = "live"
         self.client_params = {"param1": "dummy", "param2": "data"}
         self.block_height_payload = {
             "id": "exporter",
@@ -194,7 +197,7 @@ class TestCardanoCollector(TestCase):
         }
         with mock.patch('collectors.WebsocketInterface') as mocked_websocket:
             self.cardano_collector = collectors.CardanoCollector(
-                self.url, self.labels, self.chain_id, **self.client_params)
+                self.url, self.labels, self.chain_id, self.network_status, **self.client_params)
             self.mocked_websocket = mocked_websocket
 
     def test_websocket_interface_created(self):
@@ -242,6 +245,7 @@ class TestBitcoinCollector(TestCase):
         self.url = "wss://test.com"
         self.labels = ["dummy", "labels"]
         self.chain_id = 123
+        self.network_status = "live"
         self.open_timeout = 8
         self.ping_timeout = 9
         self.client_params = {
@@ -259,7 +263,7 @@ class TestBitcoinCollector(TestCase):
         }
         with mock.patch('collectors.HttpsInterface') as mocked_connection:
             self.bitcoin_collector = collectors.BitcoinCollector(
-                self.url, self.labels, self.chain_id, **self.client_params)
+                self.url, self.labels, self.chain_id, self.network_status, **self.client_params)
             self.mocked_connection = mocked_connection
 
     def test_logger_metadata(self):
@@ -384,6 +388,7 @@ class TestFilecoinCollector(TestCase):
         self.url = "wss://test.com"
         self.labels = ["dummy", "labels"]
         self.chain_id = 123
+        self.network_status = "live"
         self.open_timeout = 8
         self.ping_timeout = 9
         self.client_params = {
@@ -400,7 +405,7 @@ class TestFilecoinCollector(TestCase):
         }
         with mock.patch('collectors.HttpsInterface') as mocked_connection:
             self.filecoin_collector = collectors.FilecoinCollector(
-                self.url, self.labels, self.chain_id, **self.client_params)
+                self.url, self.labels, self.chain_id, self.network_status, **self.client_params)
             self.mocked_connection = mocked_connection
 
     def test_logger_metadata(self):
@@ -498,6 +503,7 @@ class TestSolanaCollector(TestCase):
         self.url = "wss://test.com"
         self.labels = ["dummy", "labels"]
         self.chain_id = 123
+        self.network_status = "live"
         self.open_timeout = 8
         self.ping_timeout = 9
         self.client_params = {
@@ -514,7 +520,7 @@ class TestSolanaCollector(TestCase):
         }
         with mock.patch('collectors.HttpsInterface') as mocked_connection:
             self.solana_collector = collectors.SolanaCollector(
-                self.url, self.labels, self.chain_id, **self.client_params)
+                self.url, self.labels, self.chain_id, self.network_status, **self.client_params)
             self.mocked_connection = mocked_connection
 
     def test_logger_metadata(self):
@@ -598,6 +604,7 @@ class TestStarknetCollector(TestCase):
         self.url = "wss://test.com"
         self.labels = ["dummy", "labels"]
         self.chain_id = 123
+        self.network_status = "live"
         self.open_timeout = 8
         self.ping_timeout = 9
         self.client_params = {
@@ -609,7 +616,7 @@ class TestStarknetCollector(TestCase):
         }
         with mock.patch('collectors.HttpsInterface') as mocked_connection:
             self.starknet_collector = collectors.StarknetCollector(
-                self.url, self.labels, self.chain_id, **self.client_params)
+                self.url, self.labels, self.chain_id, self.network_status, **self.client_params)
             self.mocked_connection = mocked_connection
 
     def test_https_interface_created(self):
@@ -658,13 +665,14 @@ class TestAptosCollector(TestCase):
         self.url = "https://test.com"
         self.labels = ["dummy", "labels"]
         self.chain_id = 123
+        self.network_status = "live"
         self.open_timeout = 8
         self.ping_timeout = 9
         self.client_params = {
             "open_timeout": self.open_timeout, "ping_timeout": self.ping_timeout}
         with mock.patch('collectors.HttpsInterface') as mocked_connection:
             self.aptos_collector = collectors.AptosCollector(
-                self.url, self.labels, self.chain_id, **self.client_params)
+                self.url, self.labels, self.chain_id, self.network_status, **self.client_params)
             self.mocked_connection = mocked_connection
 
     def test_logger_metadata(self):

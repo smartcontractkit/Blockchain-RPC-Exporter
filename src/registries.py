@@ -10,12 +10,14 @@ class Endpoint():  # pylint: disable=too-few-public-methods
     """RPC Endpoint class, to store metadata."""
 
     def __init__(  # pylint: disable=too-many-arguments
-            self, url, provider, blockchain, network_name, network_type,
+            self, url, provider, blockchain, network_name, canonical_name, network_type, network_status,
             chain_id, **client_parameters):
         self.url = url
         self.chain_id = chain_id
+        self.canonical_name = canonical_name
+        self.network_status = network_status
         self.labels = [
-            url, provider, blockchain, network_name, network_type,
+            url, provider, blockchain, network_name, network_type, canonical_name,
             str(chain_id)
         ]
         self.client_parameters = client_parameters
@@ -50,6 +52,8 @@ class EndpointRegistry(Config):
                          self.blockchain,
                          self.get_property('network_name'),
                          self.get_property('network_type'),
+                         self.get_property('network_status'),
+                         self.get_property('canonical_name'),
                          self.get_property('chain_id'),
                          **self.client_parameters))
         return endpoints_list
@@ -96,5 +100,6 @@ class CollectorRegistry(EndpointRegistry):
             else:
                 collectors_list.append(collector(item.url,
                                                  item.labels, item.chain_id,
+                                                 item.network_status,
                                                  **self.client_parameters))
         return collectors_list

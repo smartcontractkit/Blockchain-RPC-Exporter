@@ -57,6 +57,10 @@ class Config():
             And(int),
             'network_name':
             And(str),
+            'canonical_name':
+            And(str),
+            'network_status':
+            And(str),
             'network_type':
             And(str, lambda s: s in ('Testnet', 'Mainnet')),
             'collector':

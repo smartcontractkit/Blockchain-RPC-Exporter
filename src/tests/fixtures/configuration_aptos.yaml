@@ -1,7 +1,9 @@
 blockchain: "Aptos"
 chain_id: 1234
 network_name: "Testnet"
+canonical_name: canonical_name
 network_type: "Testnet"
+network_status: live
 collector: "aptos"
 endpoints:
   - url: https://test1.com

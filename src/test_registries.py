@@ -17,10 +17,12 @@ class TestEndpoint(TestCase):  # pylint: disable=too-many-instance-attributes
         self.blockchain = "test_chain"
         self.network_name = "test_network"
         self.network_type = "ETH"
+        self.network_status = "live"
+        self.canonical_name = "canonical_name"
         self.chain_id = 123
         self.client_params = {"dummy": "data"}
         self.endpoint = Endpoint(self.url, self.provider, self.blockchain,
-                                 self.network_name, self.network_type,
+                                 self.network_name, self.canonical_name, self.network_type, self.network_status,
                                  self.chain_id, **self.client_params)
 
     def test_url_attribute(self):
@@ -34,7 +36,7 @@ class TestEndpoint(TestCase):  # pylint: disable=too-many-instance-attributes
     def test_labels_attribute(self):
         """Tests the labels attribute is set correctly"""
         labels = [self.url, self.provider, self.blockchain,
-                  self.network_name, self.network_type, str(self.chain_id)]
+                  self.network_name, self.network_type, self.canonical_name, str(self.chain_id)]
         self.assertEqual(labels, self.endpoint.labels)
 
 
@@ -213,6 +215,6 @@ def helper_test_collector_registry(test_collector_registry, mock_collector):
         all(isinstance(col, mock.Mock) for col in collector_list))
     calls = []
     for item in test_collector_registry.collector_registry.get_endpoint_registry:
-        calls.append(mock.call(item.url, item.labels, item.chain_id,
+        calls.append(mock.call(item.url, item.labels, item.chain_id, item.network_status,
                      **test_collector_registry.collector_registry.client_parameters))
     mock_collector.assert_has_calls(calls, False)

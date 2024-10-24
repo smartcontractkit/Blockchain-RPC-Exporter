@@ -2,6 +2,8 @@ blockchain: "other"
 chain_id: 1234
 network_name: "TestNetwork"
 network_type: "Mainnet"
+network_status: live
+canonical_name: canonical_name
 collector: "evm"
 endpoints:
   - url: wss://test1.com

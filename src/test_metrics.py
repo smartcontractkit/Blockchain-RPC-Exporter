@@ -13,7 +13,7 @@ class TestMetricsLoader(TestCase):
     def setUp(self):
         self.metrics_loader = MetricsLoader()
         self.labels = [
-            'url', 'provider', 'blockchain', 'network_name', 'network_type', 'evmChainID'
+            'url', 'provider', 'blockchain', 'network_name', 'network_type', 'evmChainID', "canonical_name"
         ]
 
     def test_labels(self):
@@ -90,6 +90,15 @@ class TestMetricsLoader(TestCase):
         """Tests the client_version_metric property returns a gauge"""
         self.assertEqual(InfoMetricFamily, type(
             self.metrics_loader.client_version_metric))
+    
+    def test_network_status_metri (self):
+        """Tests the network_status_metric property calls InfoMetric with the correct args"""
+        with mock.patch('metrics.InfoMetricFamily') as info_mock:
+            self.metrics_loader.network_status_metric  # pylint: disable=pointless-statement
+            info_mock.assert_called_once_with(
+                'brpc_network_status',
+                'Network status - live, preview, degraded',
+                labels=['canonical_name', 'status']) # this metric is chain-global hence just two labels
 
     def test_total_difficulty_metric(self):
         """Tests the total_difficulty_metric property calls GaugeMetric with the correct args"""
@@ -170,6 +179,7 @@ class TestPrometheusCustomCollector(TestCase):
             self.mocked_loader.return_value.disconnects_metric,
             self.mocked_loader.return_value.block_height_metric,
             self.mocked_loader.return_value.client_version_metric,
+            self.mocked_loader.return_value.network_status_metric,
             self.mocked_loader.return_value.total_difficulty_metric,
             self.mocked_loader.return_value.latency_metric,
             self.mocked_loader.return_value.block_height_delta_metric,
@@ -182,14 +192,14 @@ class TestPrometheusCustomCollector(TestCase):
     def test_collect_number_of_yields(self):
         """Tests that the collect method yields the expected number of values"""
         results = self.prom_collector.collect()
-        self.assertEqual(9, len(list(results)))
+        self.assertEqual(10, len(list(results)))
 
     def test_get_thread_count(self):
         """Tests get thread count returns the expected number of threads
         based on number of metrics and collectors"""
         thread_count = self.prom_collector.get_thread_count()
-        # Total of 9 metrics times 2 items in our mocked pool should give 18
-        self.assertEqual(18, thread_count)
+        # Total of 10 metrics times 2 items in our mocked pool should give 18
+        self.assertEqual(20, thread_count)
 
     def test_collect_thread_max_workers(self):
         """Tests the max workers is correct for the collect threads"""

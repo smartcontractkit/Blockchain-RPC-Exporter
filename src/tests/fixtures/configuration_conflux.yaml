@@ -1,7 +1,9 @@
 blockchain: "conflux"
 chain_id: 1234
 network_name: "TestNetwork"
+canonical_name: canonical_name
 network_type: "Mainnet"
+network_status: live
 collector: "conflux"
 endpoints:
   - url: wss://test1.com

@@ -44,10 +44,14 @@ class TestConfiguration(TestCase):
         expected_configuration = {
             "blockchain":
             "TestChain",
+            "canonical_name":
+            "canonical_name",
             "chain_id":
             1234,
             "network_name":
             "TestNetwork",
+            "network_status":
+            "live",
             "network_type":
             "Mainnet",
             "collector":

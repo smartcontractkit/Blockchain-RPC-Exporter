@@ -12,7 +12,7 @@ class MetricsLoader():
     def __init__(self):
         self._labels = [
             'url', 'provider', 'blockchain', 'network_name', 'network_type',
-            'evmChainID'
+            'evmChainID', 'canonical_name'
         ]
 
     @property
@@ -51,6 +51,14 @@ class MetricsLoader():
             'brpc_client_version',
             'Client version for the particular RPC endpoint.',
             labels=self._labels)
+    
+    @property
+    def network_status_metric(self):
+        """Returns instantiated network status metric."""
+        return InfoMetricFamily(
+            'brpc_network_status',
+            'Network status - live, preview, degraded',
+            labels=['canonical_name', 'status'])
 
     @property
     def total_difficulty_metric(self):
@@ -126,6 +134,7 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
         disconnects_metric = self._metrics_loader.disconnects_metric
         block_height_metric = self._metrics_loader.block_height_metric
         client_version_metric = self._metrics_loader.client_version_metric
+        network_status_metric = self._metrics_loader.network_status_metric
         total_difficulty_metric = self._metrics_loader.total_difficulty_metric
         latency_metric = self._metrics_loader.latency_metric
         block_height_delta_metric = self._metrics_loader.block_height_delta_metric
@@ -149,6 +158,7 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
                                 total_difficulty_metric, 'total_difficulty')
         for collector in self._collector_registry:
             self._write_metric(collector, latency_metric, 'latency')
+            self._write_metric(collector, network_status_metric, 'network_status')
         self.delta_compared_to_max(
             block_height_metric, block_height_delta_metric)
         self.delta_compared_to_max(
@@ -161,5 +171,6 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
         yield client_version_metric
         yield total_difficulty_metric
         yield latency_metric
+        yield network_status_metric
         yield block_height_delta_metric
         yield difficulty_delta_metric
