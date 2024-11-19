@@ -12,6 +12,7 @@ class MetricsLoader():
     def __init__(self):
         self._labels = [
             'url', 'provider', 'blockchain', 'network_name', 'network_type',
+            'integration_maturity', 'canonical_name', 'chain_selector',
             'evmChainID'
         ]
 

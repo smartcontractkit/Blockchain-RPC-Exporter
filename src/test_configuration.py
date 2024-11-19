@@ -50,6 +50,12 @@ class TestConfiguration(TestCase):
             "TestNetwork",
             "network_type":
             "Mainnet",
+            "integration_maturity":
+            "development",
+            "canonical_name":
+            "test-network-mainnet",
+            "chain_selector":
+            121212,
             "collector":
             "evm",
             "endpoints": [{

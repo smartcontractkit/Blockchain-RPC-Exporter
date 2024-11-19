@@ -59,6 +59,12 @@ class Config():
             And(str),
             'network_type':
             And(str, lambda s: s in ('Testnet', 'Mainnet')),
+            'integration_maturity':
+            And(str, lambda s: s in ('production', 'development')),
+            'canonical_name':
+            And(str),
+            'chain_selector':
+            And(int),
             'collector':
             And(str, lambda s: s in supported_collectors),
             Optional('connection_parameters'): {

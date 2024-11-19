@@ -13,7 +13,9 @@ class TestMetricsLoader(TestCase):
     def setUp(self):
         self.metrics_loader = MetricsLoader()
         self.labels = [
-            'url', 'provider', 'blockchain', 'network_name', 'network_type', 'evmChainID'
+            'url', 'provider', 'blockchain', 'network_name', 'network_type', 
+            'integration_maturity', 'canonical_name', 'chain_selector',
+            'evmChainID'
         ]
 
     def test_labels(self):

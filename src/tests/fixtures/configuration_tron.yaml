@@ -2,6 +2,9 @@ blockchain: "Tron"
 chain_id: 1234
 network_name: "Testnet"
 network_type: "Testnet"
+integration_maturity: "development"
+canonical_name: "test-network-testnet"
+chain_selector: 121212
 collector: "tron"
 endpoints:
   - url: https://test1.com

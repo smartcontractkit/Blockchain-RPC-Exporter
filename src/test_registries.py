@@ -17,10 +17,15 @@ class TestEndpoint(TestCase):  # pylint: disable=too-many-instance-attributes
         self.blockchain = "test_chain"
         self.network_name = "test_network"
         self.network_type = "ETH"
+        self.integration_maturity = "development"
+        self.canonical_name = "test-chain-network"
+        self.chain_selector = 121212
         self.chain_id = 123
         self.client_params = {"dummy": "data"}
         self.endpoint = Endpoint(self.url, self.provider, self.blockchain,
                                  self.network_name, self.network_type,
+                                 self.integration_maturity, self.canonical_name,
+                                 self.chain_selector,
                                  self.chain_id, **self.client_params)
 
     def test_url_attribute(self):
@@ -34,7 +39,10 @@ class TestEndpoint(TestCase):  # pylint: disable=too-many-instance-attributes
     def test_labels_attribute(self):
         """Tests the labels attribute is set correctly"""
         labels = [self.url, self.provider, self.blockchain,
-                  self.network_name, self.network_type, str(self.chain_id)]
+                  self.network_name, self.network_type,
+                  self.integration_maturity, self.canonical_name,
+                  str(self.chain_selector),
+                  str(self.chain_id)]
         self.assertEqual(labels, self.endpoint.labels)
 
 
