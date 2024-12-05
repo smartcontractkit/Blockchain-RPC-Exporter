@@ -9,13 +9,15 @@ from log import logger
 class Endpoint():  # pylint: disable=too-few-public-methods
     """RPC Endpoint class, to store metadata."""
 
-    def __init__(  # pylint: disable=too-many-arguments
-            self, url, provider, blockchain, network_name, network_type,
+    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+            self, url, provider, blockchain, network_name, network_type, integration_maturity,
+            canonical_name, chain_selector,
             chain_id, **client_parameters):
         self.url = url
         self.chain_id = chain_id
         self.labels = [
-            url, provider, blockchain, network_name, network_type,
+            url, provider, blockchain, network_name, network_type, integration_maturity,
+            canonical_name, str(chain_selector),
             str(chain_id)
         ]
         self.client_parameters = client_parameters
@@ -50,6 +52,9 @@ class EndpointRegistry(Config):
                          self.blockchain,
                          self.get_property('network_name'),
                          self.get_property('network_type'),
+                         self.get_property('integration_maturity'),
+                         self.get_property('canonical_name'),
+                         self.get_property('chain_selector'),
                          self.get_property('chain_id'),
                          **self.client_parameters))
         return endpoints_list

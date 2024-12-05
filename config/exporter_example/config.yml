@@ -2,6 +2,9 @@ blockchain: "Example Chain" # Name of blockchain i.e "Ethereum"
 chain_id: 1              # Chain ID, can be found at https://chainlist.org/
 network_name: "Example"  # Name of the blokckchain network i.e Rinkeby
 network_type: "Example"  # Type of the blockchain network, only two values allowed (Mainnet|Testnet)
+integration_maturity: "development" # Integration Maturity - (production|development)
+canonical_name: "example-chain-testnet" # Canonical name as set by BIX
+chain_selector: 121212 # CCIP chain selector, use -1 if absent
 connection_parameters:
   open_timeout: 6 # Timeout when opening websocket connection
   close_timeout: 1 # Timeout when closing websocket connection
@@ -11,7 +14,7 @@ connection_parameters:
 collector: "evm" # This will load different collectors based on what mode exporter will run with Supported modes are: "evm", "solana", "conflux", "cardano", "bitcoin"
 endpoints: # List of endpoints with their metadata.
   - url: wss://example-rpc-1.com/ws # RPC Endpoint websocket endpoint (Must start with wss:// or https://)
-    provider: Provider1 # Provider (Must be present in allowed providers list. Please check src/settings.py line 24) The purpose is to make sure we do not have same providers spelled differently                       
+    provider: Provider1 # Provider (Must be present in allowed providers list. Please check src/settings.py line 24) The purpose is to make sure we do not have same providers spelled differently
   - url: wss://example-rpc-2.com/ws
     provider: Provider2
   - url: wss://example-rpc-3.com/ws
@@ -25,4 +28,4 @@ endpoints: # List of endpoints with their metadata.
 
 
 
-## 
+##

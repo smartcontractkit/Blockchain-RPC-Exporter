@@ -20,7 +20,7 @@ def exporter(environ, start_fn):  # pylint: disable=inconsistent-return-statemen
     """Web-server endpoints routing."""
     match environ['PATH_INFO']:
         case '/metrics':
-            return metrics_app(environ, start_fn)
+            return metrics_app(environ, start_fn) # pylint: disable=possibly-used-before-assignment
         case _:
             return return404(environ, start_fn)
 
