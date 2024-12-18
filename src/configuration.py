@@ -46,7 +46,7 @@ class Config():
 
     def _load_configuration(self):
         allowed_providers = self._load_validation_file()
-        supported_collectors = ('evm', 'cardano', 'conflux', 'solana',
+        supported_collectors = ('evm', 'evmhttp', 'cardano', 'conflux', 'solana',
                                 'bitcoin', 'doge', 'filecoin', 'starknet', 'aptos',
                                 'tron')
 
