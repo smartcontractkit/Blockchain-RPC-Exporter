@@ -1,0 +1,15 @@
+blockchain: "Evm"
+chain_id: 1234
+network_name: "TestNetwork"
+network_type: "Testnet"
+integration_maturity: "development"
+canonical_name: "test-network-testnet"
+chain_selector: 121212
+collector: "evmhttp"
+endpoints:
+  - url: https://test1.com
+    provider: TestProvider1
+  - url: https://test2.com
+    provider: TestProvider2
+  - url: https://test3.com
+    provider: TestProvider3
