@@ -10,15 +10,12 @@ from configuration import Config
 CONFIG_FILES = {"valid": "tests/fixtures/configuration.yaml",
                 "invalid": "tests/fixtures/configuration_invalid.yaml",
                 "client_params": "tests/fixtures/configuration_conn_params.yaml"}
-VALIDATION_FILES = {"valid": "tests/fixtures/validation.yaml"}
 
-
-def setup_config_object(config_file, validation_file) -> Config:
-    """Creates a Config object using the provided config and validation files"""
+def setup_config_object(config_file) -> Config:
+    """Creates a Config object using the provided config files"""
     with mock.patch.dict(
             os.environ, {
                 "CONFIG_FILE_PATH": config_file,
-                "VALIDATION_FILE_PATH": validation_file
             }):
         return Config()
 
@@ -30,9 +27,9 @@ class TestConfiguration(TestCase):
         """Set up dummy configs for us."""
         self.maxDiff = None
         self.config = setup_config_object(
-            CONFIG_FILES["valid"], VALIDATION_FILES["valid"])
+            CONFIG_FILES["valid"])
         self.client_params_config = setup_config_object(
-            CONFIG_FILES["client_params"], VALIDATION_FILES["valid"])
+            CONFIG_FILES["client_params"])
 
     def test_invalid_get_property(self):
         """Tests getting invalid properties returns None type"""
@@ -113,7 +110,7 @@ class TestConfiguration(TestCase):
         """Tests that the program exits when loading a configuration file with a schema exception"""
         with self.assertRaises(SystemExit) as cm:
             setup_config_object(
-                CONFIG_FILES["invalid"], VALIDATION_FILES["valid"])
+                CONFIG_FILES["invalid"])
         self.assertEqual(1, cm.exception.code)
 
     def test_load_and_validate_schema_exception_error_log(self):
@@ -121,7 +118,7 @@ class TestConfiguration(TestCase):
         try:
             with capture_logs() as captured:
                 setup_config_object(
-                    CONFIG_FILES["invalid"], VALIDATION_FILES["valid"])
+                    CONFIG_FILES["invalid"])
         except SystemExit:
             # Catch and pass on expected SystemExit so tests keep running
             pass
@@ -132,7 +129,7 @@ class TestConfiguration(TestCase):
         try:
             with capture_logs() as captured:
                 setup_config_object(
-                    CONFIG_FILES["valid"], VALIDATION_FILES["valid"])
+                    CONFIG_FILES["valid"])
         except SystemExit:
             # Catch and pass on expected SystemExit so tests keep running
             pass

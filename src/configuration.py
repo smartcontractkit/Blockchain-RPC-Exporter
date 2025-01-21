@@ -15,8 +15,6 @@ class Config():
         self._logger_metadata = {'component': 'Config'}
         self.configuration_file_path = os.getenv('CONFIG_FILE_PATH',
                                                  default='/config/config.yml')
-        self.validation_file_path = os.getenv('VALIDATION_FILE_PATH',
-                                              default='/config/validation.yml')
         self._configuration = self._load_configuration()
 
     def get_property(self, property_name):
@@ -45,7 +43,6 @@ class Config():
         return self.get_property('endpoints')
 
     def _load_configuration(self):
-        allowed_providers = self._load_validation_file()
         supported_collectors = ('evm', 'evmhttp', 'cardano', 'conflux', 'solana',
                                 'bitcoin', 'doge', 'filecoin', 'starknet', 'aptos',
                                 'tron')
@@ -77,18 +74,11 @@ class Config():
                 'url':
                 And(str, Regex('https://.*|wss://.*|ws://.*')),
                 'provider':
-                And(str, lambda s: s in allowed_providers)
+                And(str)
             }]
         })
         return self._load_and_validate(self.configuration_file_path,
                                        configuration_schema)
-
-    def _load_validation_file(self):
-
-        validation_schema = Schema({'allowed_providers': [And(str)]})
-        return self._load_and_validate(
-            self.validation_file_path,
-            validation_schema).get('allowed_providers')
 
     def _load_and_validate(self, path: str, schema: Schema) -> dict:
         """Loads file from path as yaml and validates against provided schema."""
