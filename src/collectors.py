@@ -500,3 +500,74 @@ class EvmHttpCollector():
     def latency(self):
         """Returns connection latency."""
         return self.interface.latest_query_latency
+
+
+class XRPLCollector():
+    """A collector to fetch information about XRP Ledger endpoints."""
+
+    def __init__(self, url, labels, chain_id, **client_parameters):
+        self.labels = labels
+        self.chain_id = chain_id
+        self.interface = HttpsInterface(url, client_parameters.get('open_timeout'),
+                                        client_parameters.get('ping_timeout'))
+        self._logger_metadata = {
+            'component': 'XRPLCollector',
+            'url': strip_url(url)
+        }
+        self.ledger_closed_payload = {
+            'method': 'ledger_closed',
+            'params': [{}]  # Required empty object in params array
+        }
+        self.server_info_payload = {
+            'method': 'server_info',
+            'params': [{}]  # Required empty object in params array
+        }
+
+    def alive(self):
+        """Returns true if endpoint is alive, false if not."""
+        return self.interface.cached_json_rpc_post(
+            self.ledger_closed_payload, non_rpc_response=True) is not None
+
+    def block_height(self):
+        """Returns latest block height (ledger index)."""
+        response = self.interface.cached_json_rpc_post(
+            self.ledger_closed_payload, non_rpc_response=True)
+        if response is None:
+            return None
+
+        # For XRPL, the response will be the whole JSON object
+        if isinstance(response, dict) and 'result' in response:
+            result = response['result']
+            return validate_dict_and_return_key_value(
+                result, 'ledger_index', self._logger_metadata)
+        return None
+
+    def client_version(self):
+        """Gets build version from server_info."""
+        response = self.interface.cached_json_rpc_post(
+            self.server_info_payload, non_rpc_response=True)
+        if response is None:
+            return None
+
+        # For XRPL, the response will be the whole JSON object
+        if isinstance(response, dict) and 'result' in response:
+            result = response['result']
+
+            if 'info' in result:
+                info = result['info']
+
+                version = validate_dict_and_return_key_value(
+                    info, 'build_version', self._logger_metadata, stringify=True)
+
+                # If build_version is not found, try libxrpl_version
+                if version is None:
+                    version = validate_dict_and_return_key_value(
+                        info, 'libxrpl_version', self._logger_metadata, stringify=True)
+
+                if version is not None:
+                    return {"client_version": version}
+        return None
+
+    def latency(self):
+        """Returns connection latency."""
+        return self.interface.latest_query_latency

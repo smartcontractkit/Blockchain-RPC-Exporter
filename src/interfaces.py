@@ -70,18 +70,24 @@ class HttpsInterface():  # pylint: disable=too-many-instance-attributes
                                 **self._logger_metadata)
             return None
 
-    def json_rpc_post(self, payload):
+    def json_rpc_post(self, payload, non_rpc_response=None):
         """Checks the validity of a successful json-rpc response. If any of the
         validations fail, the method returns type None. """
         response = self._return_and_validate_request(method='POST', payload=payload)
         if response is not None:
-            result = return_and_validate_rpc_json_result(
-                response, self._logger_metadata)
+            # Use REST validation instead of RPC validation to handle non standard RPC responses such as XRPL
+            if non_rpc_response:
+                result = return_and_validate_rest_api_json_result(
+                    response, self._logger_metadata)
+            else:
+                result = return_and_validate_rpc_json_result(
+                    response, self._logger_metadata)
+
             if result is not None:
                 return result
         return None
 
-    def cached_json_rpc_post(self, payload: dict):
+    def cached_json_rpc_post(self, payload: dict, non_rpc_response=None):
         """Calls json_rpc_post and stores the result in in-memory cache."""
         cache_key = f"rpc:{str(payload)}"
 
@@ -89,7 +95,7 @@ class HttpsInterface():  # pylint: disable=too-many-instance-attributes
             return_value = self.cache.retrieve_key_value(cache_key)
             return return_value
 
-        value = self.json_rpc_post(payload=payload)
+        value = self.json_rpc_post(payload=payload, non_rpc_response=non_rpc_response)
         if value is not None:
             self.cache.store_key_value(cache_key, value)
         return value
