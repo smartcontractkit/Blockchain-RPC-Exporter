@@ -811,3 +811,112 @@ class TestTronCollector(TestCase):
         """Tests that the latency is obtained from the interface based on latest_query_latency"""
         self.mocked_connection.return_value.latest_query_latency = 0.123
         self.assertEqual(0.123, self.tron_collector.latency())
+
+class TestXRPLCollector(TestCase):
+    """Tests the XRPL collector class"""
+
+    def setUp(self):
+        self.url = "https://test.com"
+        self.labels = ["dummy", "labels"]
+        self.chain_id = 123
+        self.open_timeout = 8
+        self.ping_timeout = 9
+        self.client_params = {
+            "open_timeout": self.open_timeout, "ping_timeout": self.ping_timeout}
+        with mock.patch('collectors.HttpsInterface') as mocked_connection:
+            self.xrpl_collector = collectors.XRPLCollector(
+                self.url, self.labels, self.chain_id, **self.client_params)
+            self.mocked_connection = mocked_connection
+
+    def test_logger_metadata(self):
+        """Validate logger metadata. Makes sure url is stripped by helpers.strip_url function."""
+        expected_metadata = {
+            'component': 'XRPLCollector', 'url': 'test.com'}
+        self.assertEqual(expected_metadata,
+                         self.xrpl_collector._logger_metadata)
+
+    def test_https_interface_created(self):
+        """Tests that the XRPL collector calls the https interface with the correct args"""
+        self.mocked_connection.assert_called_once_with(
+            self.url, self.open_timeout, self.ping_timeout)
+
+    def test_interface_attribute_exists(self):
+        """Tests that the interface attribute exists."""
+        self.assertTrue(hasattr(self.xrpl_collector, 'interface'))
+
+    def test_alive_call(self):
+        """Tests the alive function uses the correct call"""
+        self.xrpl_collector.alive()
+        self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
+            self.xrpl_collector.ledger_closed_payload, non_rpc_response=True)
+
+    def test_alive_false(self):
+        """Tests the alive function returns false when post returns None"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
+        result = self.xrpl_collector.alive()
+        self.assertFalse(result)
+
+    def test_block_height(self):
+        """Tests the block_height function uses the correct call to get block height"""
+        self.xrpl_collector.block_height()
+        self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
+            self.xrpl_collector.ledger_closed_payload, non_rpc_response=True)
+
+    def test_block_height_get_ledger_index(self):
+        """Tests that the block height is returned with the ledger_index key"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
+            "result": {"ledger_index": 96217031}}
+        result = self.xrpl_collector.block_height()
+        self.assertEqual(96217031, result)
+
+    def test_block_height_key_error_returns_none(self):
+        """Tests that the block height returns None on KeyError"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
+            "result": {"dummy_key": 5}}
+        result = self.xrpl_collector.block_height()
+        self.assertEqual(None, result)
+
+    def test_block_height_returns_none(self):
+        """Tests that the block height returns None if json_rpc_post returns None"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
+        result = self.xrpl_collector.block_height()
+        self.assertEqual(None, result)
+
+    def test_client_version(self):
+        """Tests the client_version function uses the correct call to get client version"""
+        self.xrpl_collector.client_version()
+        self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
+            self.xrpl_collector.server_info_payload, non_rpc_response=True)
+
+    def test_client_version_get_build_version(self):
+        """Tests that the client version is returned with the build_version key"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
+            "result": {"info": {"build_version": "2.4.0"}}}
+        result = self.xrpl_collector.client_version()
+        self.assertEqual({"client_version": "2.4.0"}, result)
+
+    def test_client_version_get_libxrpl_version(self):
+        """Tests that the client version is returned with the libxrpl_version key
+          if build_version is not present"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
+            "result": {"info": {"libxrpl_version": "2.4.0"}}}
+        result = self.xrpl_collector.client_version()
+        self.assertEqual({"client_version": "2.4.0"}, result)
+
+    def test_client_version_key_error_returns_none(self):
+        """Tests that the client_version returns None on KeyError"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
+            "result": {"info": {"dummy_key": "value"}}}
+        result = self.xrpl_collector.client_version()
+        self.assertEqual(None, result)
+
+    def test_client_version_returns_none(self):
+        """Tests that the client_version returns None if json_rpc_post returns None"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
+        result = self.xrpl_collector.client_version()
+        self.assertEqual(None, result)
+
+    def test_latency(self):
+        """Tests that the latency is obtained from the interface based on latest_query_latency"""
+        self.mocked_connection.return_value.latest_query_latency = 0.123
+        self.assertEqual(0.123, self.xrpl_collector.latency())

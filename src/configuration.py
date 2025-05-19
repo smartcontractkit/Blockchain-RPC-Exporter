@@ -45,7 +45,7 @@ class Config():
     def _load_configuration(self):
         supported_collectors = ('evm', 'evmhttp', 'cardano', 'conflux', 'solana',
                                 'bitcoin', 'doge', 'filecoin', 'starknet', 'aptos',
-                                'tron')
+                                'tron', 'xrpl')
 
         configuration_schema = Schema({
             'blockchain':
