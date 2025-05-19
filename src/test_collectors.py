@@ -848,7 +848,7 @@ class TestXRPLCollector(TestCase):
         """Tests the alive function uses the correct call"""
         self.xrpl_collector.alive()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
-            self.xrpl_collector.ledger_closed_payload)
+            self.xrpl_collector.ledger_closed_payload, non_rpc_response=True)
 
     def test_alive_false(self):
         """Tests the alive function returns false when post returns None"""
@@ -860,19 +860,19 @@ class TestXRPLCollector(TestCase):
         """Tests the block_height function uses the correct call to get block height"""
         self.xrpl_collector.block_height()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
-            self.xrpl_collector.ledger_closed_payload)
+            self.xrpl_collector.ledger_closed_payload, non_rpc_response=True)
 
     def test_block_height_get_ledger_index(self):
         """Tests that the block height is returned with the ledger_index key"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
-            "ledger_index": 96217031}
+            "result": {"ledger_index": 96217031}}
         result = self.xrpl_collector.block_height()
         self.assertEqual(96217031, result)
 
     def test_block_height_key_error_returns_none(self):
         """Tests that the block height returns None on KeyError"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
-            "dummy_key": 5}
+            "result": {"dummy_key": 5}}
         result = self.xrpl_collector.block_height()
         self.assertEqual(None, result)
 
@@ -886,19 +886,26 @@ class TestXRPLCollector(TestCase):
         """Tests the client_version function uses the correct call to get client version"""
         self.xrpl_collector.client_version()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
-            self.xrpl_collector.server_info_payload)
+            self.xrpl_collector.server_info_payload, non_rpc_response=True)
 
     def test_client_version_get_build_version(self):
         """Tests that the client version is returned with the build_version key"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
-            "info": {"build_version": "2.4.0"}}
+            "result": {"info": {"build_version": "2.4.0"}}}
+        result = self.xrpl_collector.client_version()
+        self.assertEqual({"client_version": "2.4.0"}, result)
+
+    def test_client_version_get_libxrpl_version(self):
+        """Tests that the client version is returned with the libxrpl_version key if build_version is not present"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
+            "result": {"info": {"libxrpl_version": "2.4.0"}}}
         result = self.xrpl_collector.client_version()
         self.assertEqual({"client_version": "2.4.0"}, result)
 
     def test_client_version_key_error_returns_none(self):
         """Tests that the client_version returns None on KeyError"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
-            "info": {"dummy_key": "value"}}
+            "result": {"info": {"dummy_key": "value"}}}
         result = self.xrpl_collector.client_version()
         self.assertEqual(None, result)
 
