@@ -75,7 +75,8 @@ class HttpsInterface():  # pylint: disable=too-many-instance-attributes
         validations fail, the method returns type None. """
         response = self._return_and_validate_request(method='POST', payload=payload)
         if response is not None:
-            # Use REST validation instead of RPC validation to handle non standard RPC responses such as XRPL
+            # Use REST validation instead of RPC validation if non_rpc_response is True
+            # to handle non-RPC responses such as XRPL
             if non_rpc_response:
                 result = return_and_validate_rest_api_json_result(
                     response, self._logger_metadata)

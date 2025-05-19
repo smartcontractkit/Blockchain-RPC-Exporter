@@ -555,7 +555,6 @@ class XRPLCollector():
 
             if 'info' in result:
                 info = result['info']
-
                 version = validate_dict_and_return_key_value(
                     info, 'build_version', self._logger_metadata, stringify=True)
 

@@ -896,7 +896,8 @@ class TestXRPLCollector(TestCase):
         self.assertEqual({"client_version": "2.4.0"}, result)
 
     def test_client_version_get_libxrpl_version(self):
-        """Tests that the client version is returned with the libxrpl_version key if build_version is not present"""
+        """Tests that the client version is returned with the libxrpl_version key
+          if build_version is not present"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
             "result": {"info": {"libxrpl_version": "2.4.0"}}}
         result = self.xrpl_collector.client_version()
