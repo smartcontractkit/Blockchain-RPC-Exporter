@@ -191,8 +191,8 @@ class TestPrometheusCustomCollector(TestCase):
         """Tests get thread count returns the expected number of threads
         based on number of metrics and collectors"""
         thread_count = self.prom_collector.get_thread_count()
-        # Total of 9 metrics times 2 items in our mocked pool should give 18
-        self.assertEqual(18, thread_count)
+        # Total of 10 metrics times 2 items in our mocked pool should give 20
+        self.assertEqual(20, thread_count)
 
     def test_collect_thread_max_workers(self):
         """Tests the max workers is correct for the collect threads"""
