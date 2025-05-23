@@ -85,29 +85,23 @@ class TestEvmCollector(TestCase):
         result = self.evm_collector.finalized_block_height()
         self.assertEqual(None, result)
 
-    def test_finalized_block_height_return(self):
-        """Tests that finalized_block_height converts hex block number to integer correctly"""
+    def test_finalized_block_height_return_int(self):
+        """Tests that finalized_block_height returns integer block number correctly"""
         mock_block_response = {
-            "number": "0x1a2b3c",
+            "number": 1715004,  # Already an integer, not hex string
             "hash": "0x456def"
         }
         self.mocked_websocket.return_value.query.return_value = mock_block_response
         result = self.evm_collector.finalized_block_height()
-        # 0x1a2b3c = 1715004 in decimal
         self.assertEqual(1715004, result)
 
-    def test_finalized_block_height_hex_conversion(self):
-        """Tests that finalized_block_height handles various hex values correctly"""
-        test_cases = [
-            ("0x0", 0),
-            ("0x1", 1),
-            ("0xff", 255),
-            ("0x1000", 4096)
-        ]
+    def test_finalized_block_height_various_integers(self):
+        """Tests that finalized_block_height handles various integer values correctly"""
+        test_cases = [0, 1, 255, 4096, 1000000]
 
-        for hex_value, expected_int in test_cases:
-            with self.subTest(hex_value=hex_value):
-                mock_block_response = {"number": hex_value}
+        for expected_int in test_cases:
+            with self.subTest(block_number=expected_int):
+                mock_block_response = {"number": expected_int}
                 self.mocked_websocket.return_value.query.return_value = mock_block_response
                 result = self.evm_collector.finalized_block_height()
                 self.assertEqual(expected_int, result)
