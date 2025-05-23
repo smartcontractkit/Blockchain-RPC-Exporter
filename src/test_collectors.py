@@ -840,7 +840,7 @@ class TestEvmHttpCollector(TestCase):
             "id": self.chain_id
         }
         self.evmhttp_collector.client_version()
-        self.mocked_websocket.return_value.cached_query.assert_called_once_with(
+        self.mocked_connection.return_value.cached_query.assert_called_once_with(
             payload)
 
     def test_client_version_returns_none(self):
