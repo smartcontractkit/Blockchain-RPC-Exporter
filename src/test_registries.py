@@ -148,13 +148,13 @@ class TestCollectorRegistry(TestCase):
             helper_test_collector_registry(self, collector)
 
     @mock.patch.dict(os.environ, {
-        "CONFIG_FILE_PATH": "tests/fixtures/configuration_tron.yaml",
+        "CONFIG_FILE_PATH": "tests/fixtures/configuration_evmhttp.yaml",
         "VALIDATION_FILE_PATH": "tests/fixtures/validation.yaml"
     })
-    def test_get_collector_registry_for_tron(self):
-        """Tests that the Tron collector is called with the correct args"""
+    def test_get_collector_registry_for_evmhttp(self):
+        """Tests that the EvmHttp collector is called with the correct args"""
         self.collector_registry = CollectorRegistry()
-        with mock.patch('collectors.TronCollector', new=mock.Mock()) as collector:
+        with mock.patch('collectors.EvmHttpCollector', new=mock.Mock()) as collector:
             helper_test_collector_registry(self, collector)
 
     @mock.patch.dict(os.environ, {
@@ -165,16 +165,6 @@ class TestCollectorRegistry(TestCase):
         """Tests that the XRPL collector is called with the correct args"""
         self.collector_registry = CollectorRegistry()
         with mock.patch('collectors.XRPLCollector', new=mock.Mock()) as collector:
-            helper_test_collector_registry(self, collector)
-
-    @mock.patch.dict(os.environ, {
-        "CONFIG_FILE_PATH": "tests/fixtures/configuration_evmhttp.yaml",
-        "VALIDATION_FILE_PATH": "tests/fixtures/validation.yaml"
-    })
-    def test_get_collector_registry_for_evmhttp(self):
-        """Tests that the EVM HTTP collector is called with the correct args"""
-        self.collector_registry = CollectorRegistry()
-        with mock.patch('collectors.EvmHttpCollector', new=mock.Mock()) as collector:
             helper_test_collector_registry(self, collector)
 
     @mock.patch.dict(os.environ, {

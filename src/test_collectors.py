@@ -62,6 +62,44 @@ class TestEvmCollector(TestCase):
         self.mocked_websocket.return_value.get_message_property_to_hex.assert_called_once_with(
             'number')
 
+    def test_finalized_block_height(self):
+        """Tests that finalized_block_height uses correct call and args to get finalized block"""
+        # Mock with hex string, not integer
+        mock_block_response = {"number": "0x1a2b3c"}
+        self.mocked_websocket.return_value.query.return_value = mock_block_response
+
+        payload = {
+            "jsonrpc": "2.0",
+            "method": "eth_getBlockByNumber",
+            "params": ["finalized", False],
+            "id": self.chain_id
+        }
+        self.evm_collector.finalized_block_height()
+        self.mocked_websocket.return_value.query.assert_called_once_with(payload)
+
+    def test_finalized_block_height_return_none_when_query_none(self):
+        """Tests that finalized_block_height returns None if the query returns None"""
+        self.mocked_websocket.return_value.query.return_value = None
+        result = self.evm_collector.finalized_block_height()
+        self.assertEqual(None, result)
+
+    def test_finalized_block_height_return_none_when_no_number_field(self):
+        """Tests that finalized_block_height returns None if the response has no 'number' field"""
+        self.mocked_websocket.return_value.query.return_value = {"hash": "0x123"}
+        result = self.evm_collector.finalized_block_height()
+        self.assertEqual(None, result)
+
+    def test_finalized_block_height_return(self):
+        """Tests that finalized_block_height converts hex block number to integer correctly"""
+        mock_block_response = {
+            "number": "0x1a2b3c",  # Hex string as your code expects
+            "hash": "0x456def"
+        }
+        self.mocked_websocket.return_value.query.return_value = mock_block_response
+        result = self.evm_collector.finalized_block_height()
+        # 0x1a2b3c = 1715004 in decimal
+        self.assertEqual(1715004, result)
+
     def test_client_version(self):
         """Tests the client_version function uses the correct call and args to get client version"""
         payload = {
@@ -735,8 +773,8 @@ class TestAptosCollector(TestCase):
         self.mocked_connection.return_value.latest_query_latency = 0.123
         self.assertEqual(0.123, self.aptos_collector.latency())
 
-class TestTronCollector(TestCase):
-    """Tests the Tron collector class"""
+class TestEvmHttpCollector(TestCase):
+    """Tests the EvmHttp collector class"""
 
     def setUp(self):
         self.url = "https://test.com"
@@ -747,70 +785,73 @@ class TestTronCollector(TestCase):
         self.client_params = {
             "open_timeout": self.open_timeout, "ping_timeout": self.ping_timeout}
         with mock.patch('collectors.HttpsInterface') as mocked_connection:
-            self.tron_collector = collectors.TronCollector(
+            self.evmhttp_collector = collectors.EvmHttpCollector(
                 self.url, self.labels, self.chain_id, **self.client_params)
             self.mocked_connection = mocked_connection
 
     def test_logger_metadata(self):
         """Validate logger metadata. Makes sure url is stripped by helpers.strip_url function."""
         expected_metadata = {
-            'component': 'TronCollector', 'url': 'test.com'}
+            'component': 'EvmHttpCollector', 'url': 'test.com'}
         self.assertEqual(expected_metadata,
-                         self.tron_collector._logger_metadata)
+                         self.evmhttp_collector._logger_metadata)
 
     def test_https_interface_created(self):
-        """Tests that the Tron collector calls the https interface with the correct args"""
+        """Tests that the EvmHttp collector calls the https interface with the correct args"""
         self.mocked_connection.assert_called_once_with(
             self.url, self.open_timeout, self.ping_timeout)
 
     def test_interface_attribute_exists(self):
         """Tests that the interface attribute exists."""
-        self.assertTrue(hasattr(self.tron_collector, 'interface'))
+        self.assertTrue(hasattr(self.evmhttp_collector, 'interface'))
 
     def test_alive_call(self):
         """Tests the alive function uses the correct call"""
-        self.tron_collector.alive()
+        self.evmhttp_collector.alive()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
-            self.tron_collector.client_version_payload)
+            self.evmhttp_collector.client_version_payload)
 
     def test_alive_false(self):
         """Tests the alive function returns false when post returns None"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
-        result = self.tron_collector.alive()
+        result = self.evmhttp_collector.alive()
         self.assertFalse(result)
 
     def test_block_height(self):
         """Tests the block_height function uses the correct call to get block height"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = "0x1a2b3c"
-        result = self.tron_collector.block_height()
+        result = self.evmhttp_collector.block_height()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
-            self.tron_collector.block_height_payload)
+            self.evmhttp_collector.block_height_payload)
         self.assertEqual(result, 1715004)
 
     def test_block_height_raises_value_error(self):
         """Tests that the block height raises ValueError if result is invalid"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = "invalid"
         with self.assertRaises(ValueError):
-            self.tron_collector.block_height()
+            self.evmhttp_collector.block_height()
 
     def test_client_version(self):
-        """Tests the client_version function uses the correct call to get client version"""
-        self.mocked_connection.return_value.cached_json_rpc_post.return_value = "Tron/v1.0.0"
-        result = self.tron_collector.client_version()
+        """Tests the client_version function uses the correct call and args to get client version"""
+        payload = {
+            "jsonrpc": "2.0",
+            "method": "web3_clientVersion",
+            "id": 1
+        }
+        self.evmhttp_collector.client_version()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
-            self.tron_collector.client_version_payload)
-        self.assertEqual(result, {"client_version": "Tron/v1.0.0"})
+            payload)
 
     def test_client_version_returns_none(self):
         """Tests that the client_version returns None if cached_json_rpc_post returns None"""
         self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
-        result = self.tron_collector.client_version()
+        result = self.evmhttp_collector.client_version()
         self.assertIsNone(result)
 
     def test_latency(self):
         """Tests that the latency is obtained from the interface based on latest_query_latency"""
         self.mocked_connection.return_value.latest_query_latency = 0.123
-        self.assertEqual(0.123, self.tron_collector.latency())
+        self.assertEqual(0.123, self.evmhttp_collector.latency())
 
 class TestXRPLCollector(TestCase):
     """Tests the XRPL collector class"""

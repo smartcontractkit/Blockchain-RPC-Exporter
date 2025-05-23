@@ -13,7 +13,7 @@ class TestMetricsLoader(TestCase):
     def setUp(self):
         self.metrics_loader = MetricsLoader()
         self.labels = [
-            'url', 'provider', 'blockchain', 'network_name', 'network_type', 
+            'url', 'provider', 'blockchain', 'network_name', 'network_type',
             'integration_maturity', 'canonical_name', 'chain_selector',
             'evmChainID'
         ]
@@ -171,6 +171,7 @@ class TestPrometheusCustomCollector(TestCase):
             self.mocked_loader.return_value.heads_received_metric,
             self.mocked_loader.return_value.disconnects_metric,
             self.mocked_loader.return_value.block_height_metric,
+            self.mocked_loader.return_value.finalized_block_height_metric,
             self.mocked_loader.return_value.client_version_metric,
             self.mocked_loader.return_value.total_difficulty_metric,
             self.mocked_loader.return_value.latency_metric,
@@ -184,14 +185,14 @@ class TestPrometheusCustomCollector(TestCase):
     def test_collect_number_of_yields(self):
         """Tests that the collect method yields the expected number of values"""
         results = self.prom_collector.collect()
-        self.assertEqual(9, len(list(results)))
+        self.assertEqual(10, len(list(results)))
 
     def test_get_thread_count(self):
         """Tests get thread count returns the expected number of threads
         based on number of metrics and collectors"""
         thread_count = self.prom_collector.get_thread_count()
-        # Total of 9 metrics times 2 items in our mocked pool should give 18
-        self.assertEqual(18, thread_count)
+        # Total of 10 metrics times 2 items in our mocked pool should give 20
+        self.assertEqual(20, thread_count)
 
     def test_collect_thread_max_workers(self):
         """Tests the max workers is correct for the collect threads"""
