@@ -185,7 +185,7 @@ class TestPrometheusCustomCollector(TestCase):
     def test_collect_number_of_yields(self):
         """Tests that the collect method yields the expected number of values"""
         results = self.prom_collector.collect()
-        self.assertEqual(9, len(list(results)))
+        self.assertEqual(10, len(list(results)))
 
     def test_get_thread_count(self):
         """Tests get thread count returns the expected number of threads
