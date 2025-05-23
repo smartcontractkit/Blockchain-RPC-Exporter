@@ -792,12 +792,12 @@ class TestEvmHttpCollector(TestCase):
     def test_logger_metadata(self):
         """Validate logger metadata. Makes sure url is stripped by helpers.strip_url function."""
         expected_metadata = {
-            'component': 'TronCollector', 'url': 'test.com'}
+            'component': 'EvmHttpCollector', 'url': 'test.com'}
         self.assertEqual(expected_metadata,
                          self.evmhttp_collector._logger_metadata)
 
     def test_https_interface_created(self):
-        """Tests that the Tron collector calls the https interface with the correct args"""
+        """Tests that the EvmHttp collector calls the https interface with the correct args"""
         self.mocked_connection.assert_called_once_with(
             self.url, self.open_timeout, self.ping_timeout)
 
@@ -832,12 +832,16 @@ class TestEvmHttpCollector(TestCase):
             self.evmhttp_collector.block_height()
 
     def test_client_version(self):
-        """Tests the client_version function uses the correct call to get client version"""
-        self.mocked_connection.return_value.cached_json_rpc_post.return_value = "Tron/v1.0.0"
-        result = self.evmhttp_collector.client_version()
-        self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
-            self.evmhttp_collector.client_version_payload)
-        self.assertEqual(result, {"client_version": "Tron/v1.0.0"})
+        """Tests the client_version function uses the correct call and args to get client version"""
+        payload = {
+            "jsonrpc": "2.0",
+            "method": "web3_clientVersion",
+            "params": [],
+            "id": self.chain_id
+        }
+        self.evmhttp_collector.client_version()
+        self.mocked_websocket.return_value.cached_query.assert_called_once_with(
+            payload)
 
     def test_client_version_returns_none(self):
         """Tests that the client_version returns None if cached_json_rpc_post returns None"""
