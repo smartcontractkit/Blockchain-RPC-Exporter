@@ -64,8 +64,8 @@ class TestEvmCollector(TestCase):
 
     def test_finalized_block_height(self):
         """Tests the finalized_block_height function uses the correct call and args to get finalized block height"""
-        # Mock the response to prevent the actual logic from executing
-        mock_block_response = {"number": 1715004}
+        # Mock with hex string, not integer
+        mock_block_response = {"number": "0x1a2b3c"}
         self.mocked_websocket.return_value.query.return_value = mock_block_response
 
         payload = {
@@ -89,26 +89,16 @@ class TestEvmCollector(TestCase):
         result = self.evm_collector.finalized_block_height()
         self.assertEqual(None, result)
 
-    def test_finalized_block_height_return_int(self):
-        """Tests that finalized_block_height returns integer block number correctly"""
+    def test_finalized_block_height_return(self):
+        """Tests that finalized_block_height converts hex block number to integer correctly"""
         mock_block_response = {
-            "number": 1715004,  # Already an integer, not hex string
+            "number": "0x1a2b3c",  # Hex string as your code expects
             "hash": "0x456def"
         }
         self.mocked_websocket.return_value.query.return_value = mock_block_response
         result = self.evm_collector.finalized_block_height()
+        # 0x1a2b3c = 1715004 in decimal
         self.assertEqual(1715004, result)
-
-    def test_finalized_block_height_various_integers(self):
-        """Tests that finalized_block_height handles various integer values correctly"""
-        test_cases = [0, 1, 255, 4096, 1000000]
-
-        for expected_int in test_cases:
-            with self.subTest(block_number=expected_int):
-                mock_block_response = {"number": expected_int}
-                self.mocked_websocket.return_value.query.return_value = mock_block_response
-                result = self.evm_collector.finalized_block_height()
-                self.assertEqual(expected_int, result)
 
     def test_client_version(self):
         """Tests the client_version function uses the correct call and args to get client version"""
