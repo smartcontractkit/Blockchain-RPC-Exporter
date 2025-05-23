@@ -181,7 +181,7 @@ class TestCollectorRegistry(TestCase):
         "CONFIG_FILE_PATH": "tests/fixtures/configuration_evmhttp.yaml",
         "VALIDATION_FILE_PATH": "tests/fixtures/validation.yaml"
     })
-    def test_get_collector_registry_for_evm(self):
+    def test_get_collector_registry_for_evmhttp(self):
         """Tests that the evm collector is called with the correct args"""
         self.collector_registry = CollectorRegistry()
         with mock.patch('collectors.EvmHttpCollector', new=mock.Mock()) as collector:
