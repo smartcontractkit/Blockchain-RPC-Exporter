@@ -13,7 +13,7 @@ class TestMetricsLoader(TestCase):
     def setUp(self):
         self.metrics_loader = MetricsLoader()
         self.labels = [
-            'url', 'provider', 'blockchain', 'network_name', 'network_type', 
+            'url', 'provider', 'blockchain', 'network_name', 'network_type',
             'integration_maturity', 'canonical_name', 'chain_selector',
             'evmChainID'
         ]
@@ -171,6 +171,7 @@ class TestPrometheusCustomCollector(TestCase):
             self.mocked_loader.return_value.heads_received_metric,
             self.mocked_loader.return_value.disconnects_metric,
             self.mocked_loader.return_value.block_height_metric,
+            self.mocked_loader.return_value.finalized_block_height_metric,
             self.mocked_loader.return_value.client_version_metric,
             self.mocked_loader.return_value.total_difficulty_metric,
             self.mocked_loader.return_value.latency_metric,
