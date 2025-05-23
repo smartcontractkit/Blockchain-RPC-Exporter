@@ -63,7 +63,7 @@ class TestEvmCollector(TestCase):
             'number')
 
     def test_finalized_block_height(self):
-        """Tests the finalized_block_height function uses the correct call and args to get finalized block height"""
+        """Tests that finalized_block_height uses correct call and args to get finalized block"""
         # Mock with hex string, not integer
         mock_block_response = {"number": "0x1a2b3c"}
         self.mocked_websocket.return_value.query.return_value = mock_block_response

@@ -457,7 +457,7 @@ class EvmHttpCollector():
         raise ValueError(f"Invalid block height result: {result}")
 
     def finalized_block_height(self):
-        """Cached query and returns finalized blockheight after converting hex string value to an int"""
+        """Returns finalized blockheight after converting hex string value to an int"""
         finalized_block = self.interface.json_rpc_post(self.finalized_block_height_payload)
         if finalized_block is None:
             return None

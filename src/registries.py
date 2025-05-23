@@ -88,8 +88,6 @@ class CollectorRegistry(EndpointRegistry):
                     collector = collectors.StarknetCollector
                 case "aptos", "aptos":
                     collector = collectors.AptosCollector
-                case "tron", "tron":
-                    collector = collectors.TronCollector
                 case "xrpl", "xrpl":
                     collector = collectors.XRPLCollector
                 case "evmhttp", other: # pylint: disable=unused-variable
