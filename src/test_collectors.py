@@ -836,7 +836,6 @@ class TestEvmHttpCollector(TestCase):
         payload = {
             "jsonrpc": "2.0",
             "method": "web3_clientVersion",
-            "params": [],
             "id": self.chain_id
         }
         self.evmhttp_collector.client_version()
