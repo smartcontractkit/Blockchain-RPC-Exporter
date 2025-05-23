@@ -28,6 +28,23 @@ class EvmCollector():
         """Returns latest block height."""
         return self.interface.get_message_property_to_hex('number')
 
+    def finalized_block_height(self):
+        """Runs a query to return finalized block height"""
+        payload = {
+            "jsonrpc": "2.0",
+            "method": "eth_getBlockByNumber",
+            "params": ["finalized", False],
+            "id": self.chain_id
+        }
+
+        finalized_block = self.interface.query(payload)
+        if finalized_block is None:
+            return None
+        block_number_hex = finalized_block.get('number')
+        if block_number_hex is None:
+            return None
+        return int(block_number_hex, 16)
+
     def heads_received(self):
         """Returns amount of received messages from the subscription."""
         return self.interface.heads_received
@@ -53,7 +70,6 @@ class EvmCollector():
             return None
         client_version = {"client_version": version}
         return client_version
-
 
 class ConfluxCollector():
     """A collector to fetch information about conflux RPC endpoints."""
@@ -394,60 +410,6 @@ class AptosCollector():
         """Returns connection latency."""
         return self.interface.latest_query_latency
 
-class TronCollector():
-    """A collector to fetch information from Tron endpoints."""
-
-    def __init__(self, url, labels, chain_id, **client_parameters):
-
-        self.labels = labels
-        self.chain_id = chain_id
-        self.interface = HttpsInterface(url, client_parameters.get('open_timeout'),
-                                        client_parameters.get('ping_timeout'))
-
-        self._logger_metadata = {
-            'component': 'TronCollector',
-            'url': strip_url(url)
-        }
-        self.client_version_payload = {
-            'jsonrpc': '2.0',
-            'method': "web3_clientVersion",
-            'id': 1
-        }
-        self.block_height_payload = {
-            'jsonrpc': '2.0',
-            'method': "eth_blockNumber",
-            'id': 1
-        }
-
-    def alive(self):
-        """Returns true if endpoint is alive, false if not."""
-        # Run cached query because we can also fetch client version from this
-        # later on. This will save us an RPC call per run.
-        return self.interface.cached_json_rpc_post(
-            self.client_version_payload) is not None
-
-    def block_height(self):
-        """Cached query and returns blockheight after converting hex string value to an int"""
-        result = self.interface.cached_json_rpc_post(self.block_height_payload)
-
-        if result and isinstance(result, str) and result.startswith('0x'):
-            return int(result, 16)
-        raise ValueError(f"Invalid block height result: {result}")
-
-    def client_version(self):
-        """Runs a cached query to return client version."""
-        version = self.interface.cached_json_rpc_post(
-            self.client_version_payload)
-        if version is None:
-            return None
-        client_version = {"client_version": version}
-        return client_version
-
-    def latency(self):
-        """Returns connection latency."""
-        return self.interface.latest_query_latency
-
-
 class EvmHttpCollector():
     """A collector to fetch information from EVM HTTPS endpoints."""
 
@@ -472,6 +434,12 @@ class EvmHttpCollector():
             'method': "eth_blockNumber",
             'id': 1
         }
+        self.finalized_block_height_payload = {
+            "jsonrpc": "2.0",
+            "method": "eth_getBlockByNumber",
+            "params": ["finalized", False],
+            "id": 1
+        }
 
     def alive(self):
         """Returns true if endpoint is alive, false if not."""
@@ -487,6 +455,16 @@ class EvmHttpCollector():
         if result and isinstance(result, str) and result.startswith('0x'):
             return int(result, 16)
         raise ValueError(f"Invalid block height result: {result}")
+
+    def finalized_block_height(self):
+        """Cached query and returns finalized blockheight after converting hex string value to an int"""
+        finalized_block = self.interface.json_rpc_post(self.finalized_block_height_payload)
+        if finalized_block is None:
+            return None
+        block_number_hex = finalized_block.get('number')
+        if block_number_hex is None:
+            return None
+        return int(block_number_hex, 16)
 
     def client_version(self):
         """Runs a cached query to return client version."""

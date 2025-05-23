@@ -19,11 +19,11 @@ services:
       - monitoring
     volumes:
       - type: bind
-        source: ${PWD}/${CONFIG_FILE_PATH}
+        source: ./config.yml
         target: /config/config.yml
-      - type: bind
-        source: ${PWD}/${VALIDATION_FILE_PATH}
-        target: /config/validation.yml
+      # - type: bind
+      #   source: ${PWD}/${VALIDATION_FILE_PATH}
+      #   target: /config/validation.yml
   prometheus:
     image: prom/prometheus:latest
     logging:

@@ -46,6 +46,14 @@ class MetricsLoader():
                                  labels=self._labels)
 
     @property
+    def finalized_block_height_metric(self):
+        """Returns instantiated finalized block height metric"""
+        return GaugeMetricFamily(
+            'brpc_finalized_block_height',
+            'Latest finalized block height',
+            labels=self._labels)
+
+    @property
     def client_version_metric(self):
         """Returns instantiated client version metric."""
         return InfoMetricFamily(
@@ -126,6 +134,7 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
         heads_received_metric = self._metrics_loader.heads_received_metric
         disconnects_metric = self._metrics_loader.disconnects_metric
         block_height_metric = self._metrics_loader.block_height_metric
+        finalized_block_height_metric = self._metrics_loader.finalized_block_height_metric
         client_version_metric = self._metrics_loader.client_version_metric
         total_difficulty_metric = self._metrics_loader.total_difficulty_metric
         latency_metric = self._metrics_loader.latency_metric
@@ -143,6 +152,8 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
                 executor.submit(self._write_metric, collector,
                                 block_height_metric, 'block_height')
                 executor.submit(self._write_metric, collector,
+                                finalized_block_height_metric, 'finalized_block_height')
+                executor.submit(self._write_metric, collector,
                                 heads_received_metric, 'heads_received')
                 executor.submit(self._write_metric, collector,
                                 disconnects_metric, 'disconnects')
@@ -159,6 +170,7 @@ class PrometheusCustomCollector():  # pylint: disable=too-few-public-methods
         yield heads_received_metric
         yield disconnects_metric
         yield block_height_metric
+        yield finalized_block_height_metric
         yield client_version_metric
         yield total_difficulty_metric
         yield latency_metric
