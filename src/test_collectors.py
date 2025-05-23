@@ -836,7 +836,7 @@ class TestEvmHttpCollector(TestCase):
         payload = {
             "jsonrpc": "2.0",
             "method": "web3_clientVersion",
-            "id": self.chain_id
+            "id": 1
         }
         self.evmhttp_collector.client_version()
         self.mocked_connection.return_value.cached_json_rpc_post.assert_called_once_with(
