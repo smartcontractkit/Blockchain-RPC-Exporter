@@ -64,6 +64,10 @@ class TestEvmCollector(TestCase):
 
     def test_finalized_block_height(self):
         """Tests the finalized_block_height function uses the correct call and args to get finalized block height"""
+        # Mock the response to prevent the actual logic from executing
+        mock_block_response = {"number": 1715004}
+        self.mocked_websocket.return_value.query.return_value = mock_block_response
+
         payload = {
             "jsonrpc": "2.0",
             "method": "eth_getBlockByNumber",
