@@ -592,7 +592,7 @@ class TonCollector():
 
     def finalized_block_height(self):
         """Runs a query to return consensus block height"""
-        result = self.interface.json_rpc_post(self.consensus_block_height_payload)
+        result = self.interface.cached_json_rpc_post(self.consensus_block_height_payload)
         if result is None:
             raise ValueError("No response received from TON endpoint")
         consensus_block = result.get('consensus_block', None)
