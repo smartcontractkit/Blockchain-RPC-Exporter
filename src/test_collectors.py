@@ -961,3 +961,101 @@ class TestXRPLCollector(TestCase):
         """Tests that the latency is obtained from the interface based on latest_query_latency"""
         self.mocked_connection.return_value.latest_query_latency = 0.123
         self.assertEqual(0.123, self.xrpl_collector.latency())
+
+
+class TestTonCollector(TestCase):
+    """Tests the TON collector class"""
+
+    def setUp(self):
+        self.url = "https://test.com"
+        self.labels = ["dummy", "labels"]
+        self.chain_id = 123
+        self.open_timeout = 8
+        self.ping_timeout = 9
+        self.client_params = {
+            "open_timeout": self.open_timeout, "ping_timeout": self.ping_timeout}
+        self.block_height_payload = {
+            'jsonrpc': '2.0',
+            'method': "getMasterchainInfo",
+            'id': 1
+        }
+        self.consensus_block_height_payload = {
+            'jsonrpc': '2.0',
+            'method': "getConsensusBlock",
+            'id': 1
+        }
+        with mock.patch('collectors.HttpsInterface') as mocked_connection:
+            self.ton_collector = collectors.TonCollector(
+                self.url, self.labels, self.chain_id, **self.client_params)
+            self.mocked_connection = mocked_connection
+
+    def test_logger_metadata(self):
+        """Validate logger metadata. Makes sure url is stripped by helpers.strip_url function."""
+        expected_metadata = {
+            'component': 'TonCollector', 'url': 'test.com'}
+        self.assertEqual(expected_metadata,
+                         self.ton_collector._logger_metadata)
+
+    def test_connection_created(self):
+        """Tests that the ton collector calls the https interface with the correct args"""
+        self.mocked_connection.assert_called_once_with(
+            self.url + "/jsonRPC", self.open_timeout, self.ping_timeout)
+
+    def test_interface_attribute_exists(self):
+        """Tests that the interface attribute exists.
+        May be used by external calls to access objects such as the interface cache"""
+        self.assertTrue(hasattr(self.ton_collector, 'interface'))
+
+    def test_alive_true(self):
+        """Tests the alive function returns true when json_rpc_post returns valid result"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = {"last": {"seqno": 123}}
+        self.assertTrue(self.ton_collector.alive())
+
+    def test_alive_false(self):
+        """Tests the alive function returns false when json_rpc_post returns None"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
+        self.assertFalse(self.ton_collector.alive())
+
+    def test_block_height_success(self):
+        """Tests block_height method returns correct value"""
+        expected_height = 12345
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
+            "last": {"seqno": expected_height}}
+        result = self.ton_collector.block_height()
+        self.assertEqual(expected_height, result)
+
+    def test_block_height_none_response(self):
+        """Tests block_height method raises ValueError when response is None"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
+        with self.assertRaises(ValueError) as context:
+            self.ton_collector.block_height()
+        self.assertIn("No response received from TON endpoint", str(context.exception))
+
+    def test_block_height_invalid_response(self):
+        """Tests block_height method raises ValueError when response is invalid"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = {"invalid": "data"}
+        with self.assertRaises(ValueError) as context:
+            self.ton_collector.block_height()
+        self.assertIn("Invalid block height result", str(context.exception))
+
+    def test_finalized_block_height_success(self):
+        """Tests finalized_block_height method returns correct value"""
+        expected_height = 12345
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = {
+            "consensus_block": expected_height}
+        result = self.ton_collector.finalized_block_height()
+        self.assertEqual(expected_height, result)
+
+    def test_finalized_block_height_none_response(self):
+        """Tests finalized_block_height method raises ValueError when response is None"""
+        self.mocked_connection.return_value.cached_json_rpc_post.return_value = None
+        with self.assertRaises(ValueError) as context:
+            self.ton_collector.finalized_block_height()
+        self.assertIn("No response received from TON endpoint", str(context.exception))
+
+    def test_latency(self):
+        """Tests latency method returns interface latency"""
+        expected_latency = 0.123
+        self.mocked_connection.return_value.latest_query_latency = expected_latency
+        result = self.ton_collector.latency()
+        self.assertEqual(expected_latency, result)

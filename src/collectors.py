@@ -548,3 +548,58 @@ class XRPLCollector():
     def latency(self):
         """Returns connection latency."""
         return self.interface.latest_query_latency
+
+class TonCollector():
+    """A collector to fetch information about Ton endpoints."""
+
+    def __init__(self, url, labels, chain_id, **client_parameters):
+
+        self.labels = labels
+        self.chain_id = chain_id
+        self.interface = HttpsInterface(url.rstrip("/") + "/jsonRPC", client_parameters.get('open_timeout'),
+                                        client_parameters.get('ping_timeout'))
+        self._logger_metadata = {
+            'component': 'TonCollector',
+            'url': strip_url(url)
+        }
+        self.block_height_payload = {
+            'jsonrpc': '2.0',
+            'method': "getMasterchainInfo",
+            'id': 1
+        }
+        self.consensus_block_height_payload = {
+            'jsonrpc': '2.0',
+            'method': "getConsensusBlock",
+            'id': 1
+        }
+
+    def alive(self):
+        """Returns true if endpoint is alive, false if not."""
+        # Run cached query because we can also fetch block height from this
+        # later on. This will save us an RPC call per run.
+        return self.interface.cached_json_rpc_post(
+            self.block_height_payload) is not None
+
+    def block_height(self):
+        """Returns latest block height."""
+        result = self.interface.cached_json_rpc_post(self.block_height_payload)
+        if result is None:
+            raise ValueError("No response received from TON endpoint")
+        block_height = result.get('last', {}).get('seqno', None)
+        if block_height is not None:
+            return block_height
+        raise ValueError(f"Invalid block height result: {result}")
+
+    def finalized_block_height(self):
+        """Runs a query to return consensus block height"""
+        result = self.interface.json_rpc_post(self.consensus_block_height_payload)
+        if result is None:
+            raise ValueError("No response received from TON endpoint")
+        consensus_block = result.get('consensus_block', None)
+        if consensus_block is not None:
+            return consensus_block
+        raise ValueError(f"Invalid consensus block height result: {result}")
+
+    def latency(self):
+        """Returns connection latency."""
+        return self.interface.latest_query_latency
