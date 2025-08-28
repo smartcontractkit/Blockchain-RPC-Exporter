@@ -556,7 +556,8 @@ class TonCollector():
 
         self.labels = labels
         self.chain_id = chain_id
-        self.interface = HttpsInterface(url.rstrip("/") + "/jsonRPC", client_parameters.get('open_timeout'),
+        self.interface = HttpsInterface(url.rstrip("/") + "/jsonRPC",
+                                        client_parameters.get('open_timeout'),
                                         client_parameters.get('ping_timeout'))
         self._logger_metadata = {
             'component': 'TonCollector',
