@@ -90,6 +90,8 @@ class CollectorRegistry(EndpointRegistry):
                     collector = collectors.AptosCollector
                 case "xrpl", "xrpl":
                     collector = collectors.XRPLCollector
+                case "ton", "ton":
+                    collector = collectors.TonCollector
                 case "evmhttp", other: # pylint: disable=unused-variable
                     collector = collectors.EvmHttpCollector
                 case "evm", other:  # pylint: disable=unused-variable
